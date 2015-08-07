@@ -54,6 +54,18 @@ pub struct State {
     pub score: i32,
     pub game_over: bool,
 }
+impl State {
+    fn new() -> State {
+        State {
+            width: 10,
+            height: 10,
+            filled: Vec::new(),
+            unit_sequence: Vec::new(),
+            score: 0,
+            game_over: false,
+        }
+    }
+}
 
 pub fn input_to_states(i: Input) -> Vec<State> {
     unimplemented!()

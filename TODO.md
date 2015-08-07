@@ -21,6 +21,6 @@
 
 - Implement visualizer for boards etc.
 
-- Learn phrases of power
+- Learn phrases of power.
 
-- Ipmlement cool animations.
+- Implement cool animations.
