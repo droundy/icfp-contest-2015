@@ -84,6 +84,7 @@ impl State {
     }
     fn lock_unit(&mut self) {
         let u = self.unit_sequence[0].clone();
+        let size = u.members.len() as i32;
         for c in u.members {
             *self.filled(c) = true;
         }
@@ -94,6 +95,27 @@ impl State {
             }
         }
         self.unit_sequence = self.unit_sequence[1..].into();
+        let mut ls = 0;
+        let w = self.width as usize;
+        for y in (0 .. self.height as usize).rev() {
+            let mut killme = true;
+            for x in 0 .. w {
+                if !self.is_filled(Cell{x:x as i32,y:y as i32}) {
+                    killme = false;
+                    break;
+                }
+            }
+            if killme {
+                ls += 1;
+                for i in (w .. y*w).rev() {
+                    self.filled_array[i] = self.filled_array[i-w];
+                }
+                for x in 0 .. w {
+                    self.filled_array[x] = false;
+                }
+            }
+        }
+        self.score += size + 100 * (1 + ls) * ls / 2;
     }
 }
 
