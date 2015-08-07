@@ -7,6 +7,8 @@ export OUTPUT='@output.json'
 echo curl --user :$API_TOKEN -X POST -H "Content-Type: application/json" \
         -d $OUTPUT \
         https://davar.icfpcontest.org/teams/$TEAM_ID/solutions
+
 curl --user :$API_TOKEN -X POST -H "Content-Type: application/json" \
         -d $OUTPUT \
         https://davar.icfpcontest.org/teams/$TEAM_ID/solutions
+
