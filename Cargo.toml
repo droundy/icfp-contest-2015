@@ -1,0 +1,13 @@
+[package]
+name = "icfp-contest-2015"
+version = "0.1.0"
+authors = [
+  "Ξίφων Roundy <xiphonroundy@gmail.com>",
+  "David Roundy <roundyd@physics.oregonstate.edu>",
+  "Paho Lurie-Gregg <paholg1@gmail.com>",
+  "Brenden Vischer <br.vischer@gmail.com>",
+  "Elliott Capek <elliotc12@gmail.com>",
+]
+
+[dependencies]
+  rustc-serialize = "*"
