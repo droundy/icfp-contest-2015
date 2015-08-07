@@ -1,5 +1,5 @@
 [package]
-name = "icfp-contest-2015"
+name = "solve-davar"
 version = "0.1.0"
 authors = [
   "Ξίφων Roundy <xiphonroundy@gmail.com>",
@@ -8,6 +8,9 @@ authors = [
   "Brenden Vischer <br.vischer@gmail.com>",
   "Elliott Capek <elliotc12@gmail.com>",
 ]
+
+[lib]
+name = "davar"
 
 [dependencies]
   rustc-serialize = "*"
