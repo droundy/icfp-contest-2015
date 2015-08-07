@@ -113,6 +113,11 @@ impl State {
         println!("c.x {} c.y {} self.width {}", c.x, c.y, self.width);
         self.visited_array[c.x as usize + (c.y as usize)*(self.width as usize)]
     }
+
+    fn visualize(&self) -> String {
+        // print stuff here, but eventually return a string.
+        unimplemented!();
+    }
 }
 
 impl From<Input> for Vec<State> {
@@ -197,6 +202,12 @@ mod tests {
                                                     Command::Move(SW),
                                                     Command::Move(W),
                                                     Command::Move(SE)]);
+    }
+
+    #[test]
+    fn test_visualize() {
+        let st0 = State::new();
+        assert_eq!("", st0.visualize());
     }
 
 	  #[test]
