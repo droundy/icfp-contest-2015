@@ -1,0 +1,26 @@
+| cargo build --release && cargo build && cargo doc && cargo test
+c ~
+c .md
+c .tum
+c .lock
+c .json
+c .fac
+c .gitignore
+c LICENSE
+c TEAM
+c .rlib
+c problems
+c .woff
+c .js
+c .html
+c .css
+C .git
+C target/debug/.fingerprint
+C target/release/.fingerprint
+C target/debug/davar-
+C target/release/davar-
+C target/debug/solve_davar-
+C target/release/solve_davar-
+C target/debug/deps
+C target/release/deps
+C ~/.cargo
