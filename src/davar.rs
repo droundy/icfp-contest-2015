@@ -60,6 +60,28 @@ pub struct State {
     pub game_over: bool,
 }
 
+fn get_source_order(seed: i32, len: i32) -> Vec<i32> {
+    let test: Vec<i32> = vec![2, 3, 4, 5, 4, 3, 2, 2, 3, 4, 54, 5, 4, 3, 3, 3, 2, 1, 2,
+                              3, 4, 4, 2, 3, 4, 5, 4, 3, 2, 2, 3];
+    test[..len as usize].into()
+}
+
+
+// fn state_from_input(input: Input) -> std::iter::Map<std::slice::Iter<'static, i32>, State> {
+//     input.sourceSeeds.iter().map( |&s| {
+//         let mut seq: Vec<Unit> = Vec::with_capacity(input.sourceLength as usize);
+//         for i in get_source_order(s, input.sourceLength) {
+//             seq.push(input.units[i as usize].clone());
+//         }
+//         let mut state = State::with_size(input.width as usize, input.height as usize);
+//         state.unit_sequence = seq;
+//         for cell in input.filled {
+//             state.filled(cell);
+//         }
+//     })
+// }
+
+
 impl State {
     fn new() -> State {
         State {
@@ -67,6 +89,18 @@ impl State {
             height: 10,
             filled_array: vec![false; 10*10],
             visited_array: vec![false; 10*10],
+            unit_sequence: Vec::new(),
+            score: 0,
+            game_over: false,
+        }
+    }
+
+    fn with_size(width: i32, height: i32) -> State {
+        State {
+            width: width,
+            height: height,
+            filled_array: vec![false; (width*height) as usize],
+            visited_array: vec![false; (width*height) as usize],
             unit_sequence: Vec::new(),
             score: 0,
             game_over: false,
