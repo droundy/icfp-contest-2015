@@ -168,4 +168,19 @@ mod tests {
         assert_eq!(true, s.game_over);
         assert_eq!(0, s.score);
     }
+
+    #[test]
+    fn play_a_game() {
+        use Command::Move;
+
+        let mut states: Vec<State> = Vec::<State>::from(Input::from_json("problems/problem_0.json"));
+        let mut cmds: Vec<Command> = Vec::new();
+        let mut s0 = states[0].clone();
+
+        while !s0.game_over {
+            s0.apply(Move(SE)).apply(Move(SW));
+            cmds.push(Move(SE));
+            cmds.push(Move(SW));
+        }
+    }
 }
