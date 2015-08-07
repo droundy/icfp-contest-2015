@@ -173,7 +173,7 @@ mod tests {
     fn play_a_game() {
         use Command::Move;
 
-        let mut states: Vec<State> = Vec::<State>::from(Input::from_json("problems/problem_0.json"));
+        let mut states = Vec::<State>::from(Input::from_json("problems/problem_0.json"));
         let mut cmds: Vec<Command> = Vec::new();
         let mut s0 = states[0].clone();
 
@@ -182,5 +182,6 @@ mod tests {
             cmds.push(Move(SE));
             cmds.push(Move(SW));
         }
+        println!("Commands: {:?}", cmds);
     }
 }
