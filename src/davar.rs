@@ -2,6 +2,8 @@ use std::vec::Vec;
 
 pub mod simulate;
 
+pub mod json;
+
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Cell {
     pub x: i32,
