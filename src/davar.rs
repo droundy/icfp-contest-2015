@@ -7,22 +7,22 @@ pub mod simulate;
 
 pub mod in_out;
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, RustcDecodable, RustcEncodable)]
 pub struct Cell {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash, RustcDecodable, RustcEncodable)]
 pub struct Unit {
     pub members: Vec<Cell>,
     pub pivot: Cell,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Direction { W, E, SW, SE }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Command {
     Move(Direction),
     RotateClockwise,
@@ -44,7 +44,7 @@ impl Command {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash, RustcDecodable, RustcEncodable)]
 #[allow(non_snake_case)]
 pub struct Input {
     pub id: i32,
@@ -56,7 +56,7 @@ pub struct Input {
     pub sourceSeeds: Vec<i32>,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, RustcEncodable)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash, RustcEncodable)]
 #[allow(non_snake_case)]
 pub struct Solution {
     pub problemId: i32,
@@ -65,7 +65,7 @@ pub struct Solution {
     pub solution: String,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub struct State {
     pub width: i32,
     pub height: i32,
@@ -184,20 +184,27 @@ pub fn commands_to_string(cmds: Vec<Command>) -> String {
 }
 
 pub fn get_source_order(seed: i32, num: i32) -> Vec<i32> {
+    use std::num::Wrapping;
+    fn unwrap<T>(x: Wrapping<T>) -> T {
+        let Wrapping(x) = x;
+        x
+    }
+    fn getout(x: Wrapping<u32>) -> i32 {
+        unwrap((x>>16) & Wrapping(0x7fff)) as i32
+    }
 
     let mut out_vec: Vec<i32> = Vec::with_capacity(num as usize);
 
-    let modulus: u64 = 2_u64.pow(32);
-    let multiplier: u64 = 1103515245;
-    let increment: u64 = 12345;
+    let multiplier: Wrapping<u32> = Wrapping(1103515245);
+    let increment: Wrapping<u32> = Wrapping(12345);
 
-    let mut x: u64 = seed as u64;
+    let mut x: Wrapping<u32> = Wrapping(seed as u32);
 
-    out_vec.push(((x>>16) & 0x7fff) as i32);
+    out_vec.push(getout(x));
 
     for _ in 0..(num as usize) {
-      x = (multiplier*x + increment) % modulus;
-      out_vec.push(((x>>16) & 0x7fff) as i32);
+      x = multiplier*x + increment;
+      out_vec.push(getout(x));
     }
 
     out_vec
