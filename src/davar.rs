@@ -116,6 +116,11 @@ impl State {
 
     fn visualize(&self) -> String {
         // print stuff here, but eventually return a string.
+        let mut chars: Vec<Vec<char>> = vec![vec![]; self.width as usize];
+        for i in 0 .. self.width as usize {
+            chars[i] = vec![' '; self.height as usize];
+        }
+        chars[1][1] = '#';
         unimplemented!();
     }
 }
