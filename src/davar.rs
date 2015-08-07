@@ -130,7 +130,7 @@ impl From<Input> for Vec<State> {
         input.sourceSeeds.iter().map( |&s| {
             let mut seq: Vec<Unit> = Vec::with_capacity(input.sourceLength as usize);
             for i in get_source_order(s, input.sourceLength) {
-                seq.push(input.units[(i % input.sourceLength) as usize].clone());
+                seq.push(input.units[((i as usize) % input.units.len()) as usize].clone());
             }
             let mut state = State::with_size(input.width, input.height);
             state.unit_sequence = seq;
