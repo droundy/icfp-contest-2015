@@ -1,19 +1,28 @@
 extern crate num;
+extern crate rustc_serialize;
 
 use std::vec::Vec;
+use rustc_serialize::json;
+use std::path::Path;
+use std::fs::File;
+use std::str;
+use std::io::Read;
 use num::pow;
+use std::num::Wrapping;
+
+use std::convert::AsRef;
 
 pub mod simulate;
 
-pub mod json;
+//pub mod json;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
 pub struct Cell {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
 pub struct Unit {
     pub members: Vec<Cell>,
     pub pivot: Cell,
@@ -29,15 +38,34 @@ pub enum Command {
     RotateCounterClockwise,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
+#[allow(non_snake_case)]
 pub struct Input {
     pub id: i32,
     pub units: Vec<Unit>,
     pub width: i32,
     pub height: i32,
     pub filled: Vec<Cell>,
-    pub source_length: i32,
-    pub source_seeds: Vec<i32>,
+    pub sourceLength: i32,
+    pub sourceSeeds: Vec<i32>,
+}
+
+impl Input {
+    fn from_json<P: AsRef<Path>>(fname: P) -> Input {
+        let mut temp = String::new();
+        let mut file = match File::open(fname) {
+            Ok(r) => r,
+            Err(e) => panic!("Failed to open file with error {}", e),
+        };
+        file.read_to_string(&mut temp).ok().expect("Failed to read file contents.");
+        let input: &str = str::from_utf8(temp.as_bytes()).ok().expect("Failed to convert &[u8] to &str???");
+
+        let decoded: Input = match json::decode(input) {
+            Ok(r) => r,
+            Err(e) => panic!("Failed to decode JSON with error: {}", e),
+        };
+        decoded
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -91,6 +119,26 @@ pub fn string_to_commands(s: &str) -> Vec<Command> {
     out
 }
 
+pub fn get_source_order(seed: u64, num: i32) -> Vec<u64> {
+
+    let mut out_vec: Vec<u64> = Vec::with_capacity(num as usize);
+
+    let modulus: u64 = 2_u64.pow(32);
+    let multiplier: u64 = 1103515245;
+    let increment: u64 = 12345;
+
+    let mut x: u64 = seed;
+
+    out_vec.push((x>>16) & 0x7fff);
+
+    for i in 0..(num as usize) {
+      x = (multiplier*x + increment) % modulus;
+      out_vec.push((x>>16) & 0x7fff);
+    }
+
+    out_vec
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,25 +163,35 @@ mod tests {
                                                     Command::MoveSE]);
     }
 
-	#[test]
-	fn get_source_order() {
-	    //seed: i32, num: i32
+	  #[test]
+    fn test_psuedorandom() {
       let seed = 17;
-      let num = 10;
+      let n = 10;
+        let sources = get_source_order(seed, n);
+        let correct_sources = [0,24107,16552,12125,9427,13152,21440,3383,6873,16117];
+        for i in 0..n as usize {
+          assert_eq!(sources[i], correct_sources[i]);
+        }
+    }
 
-      let mut out_vec: Vec<i64> = Vec::with_capacity(num as usize);
+    #[test]
+    fn decode_p1() {
+        let manual = Input{
+            id:1,
+            units: vec![
+                Unit{
+                    pivot: Cell{x:0, y:0},
+                    members: vec![Cell{x:0, y:0}]
+                }],
+            width: 5,
+            height: 5,
+            filled: vec![Cell{x: 2, y: 4}],
+            sourceLength: 100,
+            sourceSeeds: vec![0],
+        };
+        let from_file = Input::from_json("problems/test.json");
 
-	    let modulus = 2_i64.pow(32);
-	    let multiplier = 1103515245;
-	    let increment = 12345;
+        assert_eq!(manual, from_file);
 
-      let mut x = seed;
-
-
-      for i in 0..num {
-        out_vec[i] = (multiplier*x + increment) % modulus;
-        x = out_vec[i];
-      }
-
-  }
+    }
 }

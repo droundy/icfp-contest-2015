@@ -1,7 +1,4 @@
-extern crate rustc_serialize;
-
-use rustc_serialize::json;
-
+#[test]
 fn main() {
     println!("Hello world!");
 }
