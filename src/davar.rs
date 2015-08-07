@@ -29,6 +29,21 @@ pub enum Command {
     RotateCounterClockwise,
 }
 
+impl Command {
+    pub fn to_char(self) -> char {
+        use Command::*;
+        use Direction::*;
+        match self {
+            Move(W) => 'p',
+            Move(E) => 'b',
+            Move(SW) => 'a',
+            Move(SE) => 'l',
+            RotateClockwise => 'd',
+            RotateCounterClockwise => 'k',
+        }
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
 #[allow(non_snake_case)]
 pub struct Input {
@@ -162,6 +177,10 @@ pub fn string_to_commands(s: &str) -> Vec<Command> {
         };
     }
     out
+}
+
+pub fn commands_to_string(cmds: Vec<Command>) -> String {
+    cmds.iter().map(|&c| c.to_char()).collect()
 }
 
 pub fn get_source_order(seed: i32, num: i32) -> Vec<i32> {

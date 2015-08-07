@@ -53,11 +53,11 @@ impl State {
                 for i in 0..s.unit_sequence[0].members.len() {
                     let c = s.unit_sequence[0].members[i].moved(d);
                     s.unit_sequence[0].members[i] = c;
-                    if self.is_visited(c) {
-                        s.game_over = true;
-                        s.score = 0;
-                        return s;
-                    }
+                    // if self.is_visited(c) {
+                    //     s.game_over = true;
+                    //     s.score = 0;
+                    //     return s;
+                    // }
                     if self.is_invalid(c) {
                         // FIXME need to lock unit
                         will_lock = true;
@@ -183,6 +183,7 @@ mod tests {
             s0 = s0.apply(Move(SW));
             cmds.push(Move(SW));
         }
-        println!("Commands: {:?}", cmds);
+        println!("Commands: {:?}, Solution: {}", cmds, commands_to_string(cmds.clone()));
+        println!("score: {}", s0.score);
     }
 }
