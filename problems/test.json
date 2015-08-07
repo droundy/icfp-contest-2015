@@ -1,0 +1,14 @@
+{
+    "id": 1,
+    "units": [{
+        "members": [{"x":0,"y":0}],
+        "pivot": {"x":0,"y":0}
+    }],
+    "width":5,
+    "height":5,
+    "filled": [
+        {"x":2,"y":4}
+    ],
+    "sourceLength":100,
+    "sourceSeeds":[0]
+}
