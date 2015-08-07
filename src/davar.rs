@@ -1,3 +1,4 @@
+extern crate num;
 extern crate rustc_serialize;
 
 use std::vec::Vec;
@@ -59,12 +60,6 @@ pub struct State {
     pub ls_old: i32,
     pub score: i32,
     pub game_over: bool,
-}
-
-fn get_source_order(seed: i32, len: i32) -> Vec<i32> {
-    let test: Vec<i32> = vec![2, 3, 4, 5, 4, 3, 2, 2, 3, 4, 54, 5, 4, 3, 3, 3, 2, 1, 2,
-                              3, 4, 4, 2, 3, 4, 5, 4, 3, 2, 2, 3];
-    test[..len as usize].into()
 }
 
 impl State {
@@ -159,6 +154,26 @@ pub fn string_to_commands(s: &str) -> Vec<Command> {
     out
 }
 
+pub fn get_source_order(seed: i32, num: i32) -> Vec<i32> {
+
+    let mut out_vec: Vec<i32> = Vec::with_capacity(num as usize);
+
+    let modulus: u64 = 2_u64.pow(32);
+    let multiplier: u64 = 1103515245;
+    let increment: u64 = 12345;
+
+    let mut x: u64 = seed as u64;
+
+    out_vec.push(((x>>16) & 0x7fff) as i32);
+
+    for _ in 0..(num as usize) {
+      x = (multiplier*x + increment) % modulus;
+      out_vec.push(((x>>16) & 0x7fff) as i32);
+    }
+
+    out_vec
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -183,4 +198,16 @@ mod tests {
                                                     Command::Move(W),
                                                     Command::Move(SE)]);
     }
+
+	  #[test]
+    fn test_psuedorandom() {
+      let seed = 17;
+      let n = 10;
+        let sources = get_source_order(seed, n);
+        let correct_sources = [0,24107,16552,12125,9427,13152,21440,3383,6873,16117];
+        for i in 0..n as usize {
+          assert_eq!(sources[i], correct_sources[i]);
+        }
+    }
+
 }

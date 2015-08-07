@@ -9,7 +9,7 @@ use std::io::Read;
 use std::convert::AsRef;
 
 impl Input {
-    fn from_json<P: AsRef<Path>>(fname: P) -> Input {
+    pub fn from_json<P: AsRef<Path>>(fname: P) -> Input {
         let mut temp = String::new();
         let mut file = match File::open(fname) {
             Ok(r) => r,
@@ -48,7 +48,7 @@ fn decode_test() {
 }
 
 impl Solution {
-    fn to_json(&self) -> String {
+    pub fn to_json(&self) -> String {
         json::encode(&self).ok().expect("Couldn't turn solution into JSON for some unknowable reason.")
     }
 }
