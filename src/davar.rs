@@ -7,29 +7,29 @@ pub mod simulate;
 
 pub mod in_out;
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, RustcDecodable, RustcEncodable)]
 pub struct Cell {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash, RustcDecodable, RustcEncodable)]
 pub struct Unit {
     pub members: Vec<Cell>,
     pub pivot: Cell,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Direction { W, E, SW, SE }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Command {
     Move(Direction),
     RotateClockwise,
     RotateCounterClockwise,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash, RustcDecodable, RustcEncodable)]
 #[allow(non_snake_case)]
 pub struct Input {
     pub id: i32,
@@ -41,7 +41,7 @@ pub struct Input {
     pub sourceSeeds: Vec<i32>,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, RustcEncodable)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash, RustcEncodable)]
 #[allow(non_snake_case)]
 pub struct Solution {
     pub problemId: i32,
@@ -50,7 +50,7 @@ pub struct Solution {
     pub solution: String,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub struct State {
     pub width: i32,
     pub height: i32,
