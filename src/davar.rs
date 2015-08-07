@@ -31,4 +31,20 @@ pub struct Input {
 
 pub struct Solution {
     pub id: i32,
+    pub seed: i32,
+    pub tag: Option<String>,
+    pub solution: String,
+}
+
+pub fn string_to_commands(s: &str) -> Vec<Command> {
+    let mut out = Vec::new();
+    for c in s.chars() {
+        out.push(match c {
+            'p' | '\'' | '!' | '.' | '0' | '3' => Command::MoveW,
+            'b' | 'c' | 'e' | 'f' | 'y' | '2' => Command::MoveE,
+            'a' | 'g' | 'h' | 'i' | 'j' | '4' => Command::MoveSW,
+            _ => unreachable!(),
+        })
+    }
+    out
 }
