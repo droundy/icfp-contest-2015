@@ -1,4 +1,7 @@
+extern crate num;
+
 use std::vec::Vec;
+use num::pow;
 
 pub mod simulate;
 
@@ -111,4 +114,26 @@ mod tests {
                                                     Command::MoveW,
                                                     Command::MoveSE]);
     }
+
+	#[test]
+	fn get_source_order() {
+	    //seed: i32, num: i32
+      let seed = 17;
+      let num = 10;
+
+      let mut out_vec: Vec<i64> = Vec::with_capacity(num as usize);
+
+	    let modulus = 2_i64.pow(32);
+	    let multiplier = 1103515245;
+	    let increment = 12345;
+
+      let mut x = seed;
+
+
+      for i in 0..num {
+        out_vec[i] = (multiplier*x + increment) % modulus;
+        x = out_vec[i];
+      }
+
+  }
 }
