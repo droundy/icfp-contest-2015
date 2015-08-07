@@ -185,5 +185,6 @@ mod tests {
         }
         println!("Commands: {:?}, Solution: {}", cmds, commands_to_string(cmds.clone()));
         println!("score: {}", s0.score);
+        assert!(s0.score > 0);
     }
 }

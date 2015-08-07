@@ -104,28 +104,21 @@ impl State {
         }
     }
     fn filled(&mut self, c: Cell) -> &mut bool {
-        println!("filled length is {}", self.filled_array.len());
-        println!("filled c.x {} c.y {} self.width {}", c.x, c.y, self.width);
         &mut self.filled_array[c.x as usize + (c.y as usize)*(self.width as usize)]
     }
     fn is_filled(&self, c: Cell) -> bool {
-        println!("is_filled length is {}", self.filled_array.len());
         if c.x < 0 || c.x >= self.width || c.y < 0 || c.y >= self.height {
             return false;
         }
         self.filled_array[c.x as usize + (c.y as usize)*(self.width as usize)]
     }
     fn visited(&mut self, c: Cell) -> &mut bool {
-        println!("visited length is {}", self.visited_array.len());
-        println!("visited c.x {} c.y {} self.width {}", c.x, c.y, self.width);
         &mut self.visited_array[c.x as usize + (c.y as usize)*(self.width as usize)]
     }
     fn is_visited(&self, c: Cell) -> bool {
-        println!("is_visited length is {}", self.visited_array.len());
         if c.x < 0 || c.x >= self.width || c.y < 0 || c.y >= self.height {
             return false;
         }
-        println!("c.x {} c.y {} self.width {}", c.x, c.y, self.width);
         self.visited_array[c.x as usize + (c.y as usize)*(self.width as usize)]
     }
 
