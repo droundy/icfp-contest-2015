@@ -52,3 +52,20 @@ impl Solution {
         json::encode(&self).ok().expect("Couldn't turn solution into JSON for some unknowable reason.")
     }
 }
+
+#[test]
+fn encode_test() {
+    let with_tag = Solution {
+        problemId: 5,
+        seed: 34,
+        tag: Some("tagg".into()),
+        solution: "cthulu".into()
+    };
+    let without_tag = Solution {
+        problemId: 5,
+        seed: 34,
+        tag: None,
+        solution: "cthulu".into()
+    };
+    println!("With tag: {}\n Without tag: {}.", with_tag.to_json(), without_tag.to_json());
+}
