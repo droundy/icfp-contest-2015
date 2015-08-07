@@ -33,3 +33,5 @@
 # Rust files
 Cargo.lock
 target/
+
+pull-all.sh
