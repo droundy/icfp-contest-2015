@@ -1,17 +1,10 @@
 extern crate rustc_serialize;
 
 use std::vec::Vec;
-use rustc_serialize::json;
-use std::path::Path;
-use std::fs::File;
-use std::str;
-use std::io::Read;
-
-use std::convert::AsRef;
 
 pub mod simulate;
 
-//pub mod json;
+pub mod in_out;
 
 #[derive(Debug, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
 pub struct Cell {
@@ -47,27 +40,10 @@ pub struct Input {
     pub sourceSeeds: Vec<i32>,
 }
 
-impl Input {
-    fn from_json<P: AsRef<Path>>(fname: P) -> Input {
-        let mut temp = String::new();
-        let mut file = match File::open(fname) {
-            Ok(r) => r,
-            Err(e) => panic!("Failed to open file with error {}", e),
-        };
-        file.read_to_string(&mut temp).ok().expect("Failed to read file contents.");
-        let input: &str = str::from_utf8(temp.as_bytes()).ok().expect("Failed to convert &[u8] to &str???");
-
-        let decoded: Input = match json::decode(input) {
-            Ok(r) => r,
-            Err(e) => panic!("Failed to decode JSON with error: {}", e),
-        };
-        decoded
-    }
-}
-
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, RustcEncodable)]
+#[allow(non_snake_case)]
 pub struct Solution {
-    pub id: i32,
+    pub problemId: i32,
     pub seed: i32,
     pub tag: Option<String>,
     pub solution: String,
@@ -82,6 +58,7 @@ pub struct State {
     pub score: i32,
     pub game_over: bool,
 }
+
 impl State {
     fn new() -> State {
         State {
@@ -138,26 +115,5 @@ mod tests {
                                                     Command::MoveSW,
                                                     Command::MoveW,
                                                     Command::MoveSE]);
-    }
-
-    #[test]
-    fn decode_p1() {
-        let manual = Input{
-            id:1,
-            units: vec![
-                Unit{
-                    pivot: Cell{x:0, y:0},
-                    members: vec![Cell{x:0, y:0}]
-                }],
-            width: 5,
-            height: 5,
-            filled: vec![Cell{x: 2, y: 4}],
-            sourceLength: 100,
-            sourceSeeds: vec![0],
-        };
-        let from_file = Input::from_json("problems/test.json");
-
-        assert_eq!(manual, from_file);
-
     }
 }
