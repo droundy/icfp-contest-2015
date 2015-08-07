@@ -1,16 +1,20 @@
 use std::vec::Vec;
 
+pub mod simulate;
+
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Cell {
     pub x: i32,
     pub y: i32,
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Unit {
     pub members: Vec<Cell>,
     pub pivot: Vec<Cell>,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Command {
     MoveW,
     MoveE,
@@ -20,6 +24,7 @@ pub enum Command {
     RotateCounterClockwise,
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Input {
     pub id: i32,
     pub units: Vec<Unit>,
@@ -30,11 +35,26 @@ pub struct Input {
     pub source_seeds: Vec<i32>,
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Solution {
     pub id: i32,
     pub seed: i32,
     pub tag: Option<String>,
     pub solution: String,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct State {
+    pub width: i32,
+    pub height: i32,
+    pub filled: Vec<Cell>,
+    pub unit_sequence: Vec<Unit>, // holds the actual sequence of units
+    pub score: i32,
+    pub game_over: bool,
+}
+
+pub fn input_to_states(i: Input) -> Vec<State> {
+    unimplemented!()
 }
 
 pub fn string_to_commands(s: &str) -> Vec<Command> {

@@ -1,5 +1,5 @@
 all: target/debug/solve-davar
 
-target/debug/solve-davar target/release/solve-davar : Cargo.toml Makefile src src/davar.rs src/main.rs target/debug
+target/debug/solve-davar target/release/solve-davar : Cargo.toml src src/davar.rs src/main.rs src/simulate.rs
 	cargo build --release && cargo build && cargo doc && cargo test
 

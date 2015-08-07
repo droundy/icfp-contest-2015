@@ -15,6 +15,9 @@ c .js
 c .html
 c .css
 C .git
+c debug
+c release
+c Makefile
 C target/debug/.fingerprint
 C target/release/.fingerprint
 C target/debug/davar-
