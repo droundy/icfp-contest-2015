@@ -56,6 +56,7 @@ pub struct State {
     pub filled_array: Vec<bool>,
     pub visited_array: Vec<bool>,
     pub unit_sequence: Vec<Unit>, // holds the actual sequence of units
+    pub ls_old: i32,
     pub score: i32,
     pub game_over: bool,
 }
@@ -68,6 +69,7 @@ impl State {
             filled_array: vec![false; 10*10],
             visited_array: vec![false; 10*10],
             unit_sequence: Vec::new(),
+            ls_old: 0,
             score: 0,
             game_over: false,
         }
