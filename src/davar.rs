@@ -48,3 +48,12 @@ pub fn string_to_commands(s: &str) -> Vec<Command> {
     }
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn string_to_commands_works() {
+    }
+}
