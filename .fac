@@ -14,6 +14,7 @@ c .woff
 c .js
 c .html
 c .css
+c .sh
 C .git
 c debug
 c release
