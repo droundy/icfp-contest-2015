@@ -1,8 +1,4 @@
 
-- Define data structures for elements.
-
-- Parse json program business.
-
 - Implement pseudorandom number generator
 
 - Implement simulator for programs
@@ -24,3 +20,10 @@
 - Learn phrases of power.
 
 - Implement cool animations.
+
+
+# Done
+---
+- Define data structures for elements.
+
+- Parse json program business.
