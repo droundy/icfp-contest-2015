@@ -13,7 +13,7 @@ pub struct Cell {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Unit {
     pub members: Vec<Cell>,
-    pub pivot: Vec<Cell>,
+    pub pivot: Cell,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -62,7 +62,7 @@ pub fn input_to_states(i: Input) -> Vec<State> {
 pub fn string_to_commands(s: &str) -> Vec<Command> {
     let mut out = Vec::new();
     for c in s.chars() {
-        match c {
+        match c.to_lowercase().next().unwrap() {
             'p' | '\'' | '!' | '.' | '0' | '3' => out.push(Command::MoveW),
             'b' | 'c' | 'e' | 'f' | 'y' | '2' => out.push(Command::MoveE),
             'a' | 'g' | 'h' | 'i' | 'j' | '4' => out.push(Command::MoveSW),
@@ -85,6 +85,18 @@ mod tests {
         assert_eq!(string_to_commands("pack"), vec![Command::MoveW,
                                                     Command::MoveSW,
                                                     Command::MoveE,
-                                                    Command::RotateCounterClockwise])
+                                                    Command::RotateCounterClockwise]);
+        assert_eq!(string_to_commands("PACK"), vec![Command::MoveW,
+                                                    Command::MoveSW,
+                                                    Command::MoveE,
+                                                    Command::RotateCounterClockwise]);
+        assert_eq!(string_to_commands("ei! "), vec![Command::MoveE,
+                                                    Command::MoveSW,
+                                                    Command::MoveW,
+                                                    Command::MoveSE]);
+        assert_eq!(string_to_commands("Ei! "), vec![Command::MoveE,
+                                                    Command::MoveSW,
+                                                    Command::MoveW,
+                                                    Command::MoveSE]);
     }
 }
