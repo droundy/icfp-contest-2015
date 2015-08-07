@@ -10,6 +10,7 @@ pub struct Unit {
     pub pivot: Vec<Cell>,
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum Command {
     MoveW,
     MoveE,
@@ -39,12 +40,16 @@ pub struct Solution {
 pub fn string_to_commands(s: &str) -> Vec<Command> {
     let mut out = Vec::new();
     for c in s.chars() {
-        out.push(match c {
-            'p' | '\'' | '!' | '.' | '0' | '3' => Command::MoveW,
-            'b' | 'c' | 'e' | 'f' | 'y' | '2' => Command::MoveE,
-            'a' | 'g' | 'h' | 'i' | 'j' | '4' => Command::MoveSW,
+        match c {
+            'p' | '\'' | '!' | '.' | '0' | '3' => out.push(Command::MoveW),
+            'b' | 'c' | 'e' | 'f' | 'y' | '2' => out.push(Command::MoveE),
+            'a' | 'g' | 'h' | 'i' | 'j' | '4' => out.push(Command::MoveSW),
+            'l' | 'm' | 'n' | 'o' | ' ' | '5' => out.push(Command::MoveSE),
+            'd' | 'q' | 'r' | 'v' | 'z' | '1' => out.push(Command::RotateClockwise),
+            'k' | 's' | 't' | 'u' | 'w' | 'x' => out.push(Command::RotateCounterClockwise),
+            '\t' | '\n' | '\r' => (),
             _ => unreachable!(),
-        })
+        };
     }
     out
 }
@@ -55,5 +60,9 @@ mod tests {
 
     #[test]
     fn string_to_commands_works() {
+        assert_eq!(string_to_commands("pack"), vec![Command::MoveW,
+                                                    Command::MoveSW,
+                                                    Command::MoveE,
+                                                    Command::RotateCounterClockwise])
     }
 }
