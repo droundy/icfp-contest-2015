@@ -1,10 +1,6 @@
 use super::*;
 
-pub trait Simulatable {
-    fn apply(&self, c: Command) -> Self;
-}
-
-impl Simulatable for State {
+impl State {
     fn apply(&self, c: Command) -> Self {
         let mut s = self.clone();
         if s.game_over {
