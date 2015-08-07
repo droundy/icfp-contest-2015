@@ -28,3 +28,7 @@
 *.exe
 *.out
 *.app
+
+# Rust files
+Cargo.lock
+target/
