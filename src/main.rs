@@ -11,14 +11,23 @@ use std::thread;
 
 fn main() {
     let options = opts::opts();
-
     let mut totalscore = 0;
     let mut solutions = Vec::new();
     let solver = solver::name_to_solver(&options.solver);
-    for i in 0..24 {
+    let mut fnames: Vec<String> = Vec::new();
+    
+    if options.files.len() == 0 {
+        for i in 0..25 {
+        fnames.push(format!("problems/problem_{}.json", i)); // Fix this to work with any file name inputs...
+        println!("Element is: {}", fnames[i]);
+        }
+    }
+    else {
+        fnames = options.files; // See above comment
+    }
+    for e in fnames.iter() {
         let mut problemscore = 0;
-        let fname = format!("problems/problem_{}.json", i);
-        let input = Input::from_json(fname);
+        let input = Input::from_json(e);
         let states = input_to_states(&input);
         let num_states = states.len();
         for state in states {
@@ -33,7 +42,7 @@ fn main() {
             problemscore += score;
         }
         println!("{} score[{}]: {} ({} and {})", solver.name(),
-                 i, problemscore as f64 / num_states as f64,
+                 e, problemscore as f64 / num_states as f64,
                  problemscore, num_states);
         if options.animate {
             thread::sleep_ms(1000);
@@ -48,4 +57,6 @@ fn main() {
     if !options.submit {
         println!("Not submitting solutions.");
     }
-}
+
+    
+    }
