@@ -7,6 +7,7 @@ use davar::Command::*;
 use rustc_serialize::json;
 use std::process;
 use davar::solver::{Solver};
+use std::thread;
 
 fn main() {
     let options = opts::opts();
@@ -22,6 +23,10 @@ fn main() {
         let num_states = states.len();
         for state in states {
             let (solution, score) = solver.solve(&state, &input);
+            if options.animate {
+                solution.animate(10);
+            }
+
             solutions.push(solution);
 
             totalscore += score;
@@ -30,6 +35,9 @@ fn main() {
         println!("{} score[{}]: {} ({} and {})", solver.name(),
                  i, problemscore as f64 / num_states as f64,
                  problemscore, num_states);
+        if options.animate {
+            thread::sleep_ms(1000);
+        }
     }
     if options.submit {
         //println!("I am submitting solutions for {}.", i);
