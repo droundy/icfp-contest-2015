@@ -1,4 +1,4 @@
-#usr/bin/pthon
+#!/usr/bin/env python2
 import os
 
 splitLen = 200         # 200 lines per file
