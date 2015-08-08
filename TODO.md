@@ -13,9 +13,6 @@
 
 - Learn phrases of power.
 
-- Implement cool animations.
-
-
 # Done
 ---
 - Define data structures for elements.
@@ -28,3 +25,4 @@
 
 - Implement pseudorandom number generator
 
+- Implement cool animations.

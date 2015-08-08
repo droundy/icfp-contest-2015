@@ -51,6 +51,27 @@ impl Solution {
     pub fn to_json(&self) -> String {
         json::encode(&self).ok().expect("Couldn't turn solution into JSON for some unknowable reason.")
     }
+    pub fn animate(&self, sleep_in_ms: u32) {
+        use std::thread::sleep_ms;
+
+        let states = input_to_states(&Input::from_json(format!("problems/problem_{}.json", self.problemId)));
+        let mut state: State = states.iter().filter(|&s| s.seed == self.seed).next().expect("Solution has invalid seed").clone();
+        println!("{}[2J", 27 as char);
+        println!("Problem {}, seed {}:", self.problemId, self.seed);
+        println!("{}", state.visualize());
+        println!("Score: {}", state.score);
+
+        let cmds = string_to_commands(&self.solution[..]);
+        for cmd in cmds {
+            sleep_ms(sleep_in_ms);
+            println!("{}[2J", 27 as char);
+            println!("Problem {}, seed {}:", self.problemId, self.seed);
+            state = state.apply(cmd);
+            println!("{}", state.visualize());
+            println!("Score: {}", state.score);
+        }
+    }
+
 }
 
 #[test]

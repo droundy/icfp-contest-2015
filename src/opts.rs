@@ -12,6 +12,7 @@ pub struct DavarOptions {
     pub memory_limit: Option<usize>,
     pub phrases_of_power: Vec<String>,
     pub solver: String,
+    pub animate: bool,
 }
 
 pub fn opts() -> DavarOptions {
@@ -27,6 +28,7 @@ pub fn opts() -> DavarOptions {
     opts.optopt("t", "", "time limit", "SECONDS");
     opts.optopt("m", "", "memory limit", "MEGABYTES");
     opts.optmulti("p", "", "phrase of power", "PHRASE");
+    opts.optflag("", "animate", "display animation of solution");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m }
         Err(f) => { panic!(f.to_string()) }
@@ -44,6 +46,7 @@ pub fn opts() -> DavarOptions {
         memory_limit: None,
         phrases_of_power: matches.opt_strs("p"),
         solver: "alldone".into(),
+        animate: matches.opt_present("animate"),
     };
     if let Some(nc) = matches.opt_str("c") {
         davar_options.ncores = nc.parse().unwrap();
