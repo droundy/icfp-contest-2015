@@ -183,11 +183,12 @@ mod tests {
         let mut s0 = states[0].clone();
 
         while !s0.game_over {
-            s0 = s0.apply(Move(SE));
-            cmds.push(Move(SE));
-            if !s0.game_over {
-                s0 = s0.apply(Move(SW));
-                cmds.push(Move(SW));
+            for &cmd in [Move(SE), Move(SW)].iter() {
+                if !s0.game_over {
+                    s0 = s0.apply(cmd);
+                    cmds.push(cmd);
+                    println!("{}", s0.visualize());
+                }
             }
         }
         println!("Solution: {}", commands_to_string(cmds.clone()));
