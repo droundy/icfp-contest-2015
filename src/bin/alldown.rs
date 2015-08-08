@@ -8,6 +8,8 @@ use rustc_serialize::json;
 use std::process;
 
 fn main() {
+    let options = opts::opts();
+
     println!("all down!");
     let mut solutions = Vec::new();
     for i in 0..24 {
@@ -43,12 +45,11 @@ fn main() {
             });
         }
     }
-    println!("{}", json::encode(&solutions).unwrap());
-    process::Command::new("curl")
-        .arg("--user").arg(":FtpwGAy9ndcLXLUlH7i96rgXLgi2SzEdym2caXEsNUI=")
-        .arg("-X").arg("POST")
-        .arg("-H").arg("Content-Type: application/json")
-        .arg("-d").arg(json::encode(&solutions).unwrap())
-        .arg("https://davar.icfpcontest.org/teams/97/solutions")
-        .spawn().unwrap().wait();
+    if options.submit {
+        println!("I am submitting solutions.");
+        in_out::submit_solutions(&solutions);
+    } else {
+        println!("Not submitting solutions.");
+    }
+
 }

@@ -15,3 +15,4 @@ name = "davar"
 [dependencies]
   rustc-serialize = "*"
   num = "*"
+  getopts = "0.2"

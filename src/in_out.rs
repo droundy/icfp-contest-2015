@@ -69,3 +69,15 @@ fn encode_test() {
     };
     println!("With tag: {}\n Without tag: {}.", with_tag.to_json(), without_tag.to_json());
 }
+
+pub fn submit_solutions(s: &Vec<Solution>) {
+    use std::process;
+    // println!("{}", json::encode(s).unwrap());
+    process::Command::new("curl")
+        .arg("--user").arg(":FtpwGAy9ndcLXLUlH7i96rgXLgi2SzEdym2caXEsNUI=")
+        .arg("-X").arg("POST")
+        .arg("-H").arg("Content-Type: application/json")
+        .arg("-d").arg(json::encode(s).unwrap())
+        .arg("https://davar.icfpcontest.org/teams/97/solutions")
+        .spawn().unwrap().wait();
+}

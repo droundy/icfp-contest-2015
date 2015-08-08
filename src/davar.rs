@@ -5,7 +5,7 @@ use std::vec::Vec;
 use std::collections::HashSet;
 
 pub mod simulate;
-
+pub mod opts;
 pub mod in_out;
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, RustcDecodable, RustcEncodable)]
