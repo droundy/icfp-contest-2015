@@ -83,24 +83,37 @@ impl Unit {
             _ => (),
         };
         match c {
-            Command::Move(d) =>         for i in 0 .. self.members.len() {
+            Command::Move(d) => for i in 0 .. self.members.len() {
                 self.members[i] = self.members[i].moved(d);
             },
-            Command::Rotate(r) =>
-                for i in 0 .. self.members.len() {
-                    let dc = Lattice::from(self.members[i]) - piv;
-                    self.members[i] = Cell::from(piv + dc.rotated(r));
-                },
+            Command::Rotate(r) => self.rotate(r),
         }
+    }
+    pub fn rotate(&mut self, r: Clock) {
+        let piv = Lattice::from(self.pivot);
+        for mut member in &mut self.members {
+            let dc = Lattice::from(*member) - piv;
+            *member = Cell::from(piv + dc.rotated(r));
+        };
+    }
+    pub fn rotate_ccw(&mut self) {
     }
 }
 
 impl State {
-    fn is_invalid(&self, c: Cell) -> bool {
+    pub fn is_invalid(&self, c: Cell) -> bool {
         if c.x < 0 || c.x >= self.width || c.y >= self.height || c.y < 0 {
             return true;
         }
         self.is_filled(c)
+    }
+    pub fn is_unit_invalid(&self, u: &Unit) -> bool {
+        for &c in u.members.iter() {
+            if c.x < 0 || c.x >= self.width || c.y >= self.height || c.y < 0 || self.is_filled(c) {
+                return true;
+            }
+        }
+        false
     }
     pub fn apply_sequence(&self, cs: &[Command]) -> Self {
         let mut s = self.clone();
@@ -461,7 +474,7 @@ mod tests {
 
     #[test]
     fn view_boards() {
-        for i in (0..24) {
+        for i in (0..25) {
             let states = input_to_states(&Input::from_json(format!("problems/problem_{}.json", i)));
             println!("Problem {}:", i);
             println!("{}", states[0].visualize());
