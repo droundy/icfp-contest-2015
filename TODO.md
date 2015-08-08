@@ -1,8 +1,4 @@
 
-- Implement pseudorandom number generator
-
-- Implement simulator for programs
-
 - Implement game AI
 
     * Tetris-solution
@@ -15,8 +11,6 @@
     * Parallelize with threads
     * Space-limiter (needs to know details of data structures)
 
-- Implement visualizer for boards etc.
-
 - Learn phrases of power.
 
 - Implement cool animations.
@@ -27,3 +21,10 @@
 - Define data structures for elements.
 
 - Parse json program business.
+
+- Implement visualizer for boards etc.
+
+- Implement simulator for programs
+
+- Implement pseudorandom number generator
+
