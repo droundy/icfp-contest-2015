@@ -198,7 +198,7 @@ pub fn input_to_states(input: Input) -> Vec<State> {
     use simulate::Lattice;
     let mut good_units = input.units.clone();
     for i in 0 .. good_units.len() {
-        let mut u = good_units[i].clone();
+        let u = &mut good_units[i];
         // place the units in the proper location
         let mut miny = u.members[0].y;
         for m in u.members.iter() {
@@ -209,6 +209,7 @@ pub fn input_to_states(input: Input) -> Vec<State> {
         let yoff = Lattice::new(0, -miny);
         for j in 0 .. u.members.len() {
             u.members[j] = Cell::from(Lattice::from(u.members[j]) - yoff);
+            // u.members[j].y += miny
         }
         u.pivot = Cell::from(Lattice::from(u.pivot) - yoff);
         let mut minx = u.members[0].x;
@@ -220,7 +221,14 @@ pub fn input_to_states(input: Input) -> Vec<State> {
                 maxx = m.x;
             }
         }
-        let xoff = (minx + maxx)/2 - input.width/2;
+        let widr = input.width - 1 - maxx;
+        let widl = minx;
+        let xoff = if widl < widr {
+            (widl - widr)/2
+        } else {
+            (widl - widr)/2
+        };
+        println!("xoff is {} from widl {} and widr {}", xoff, widl, widr);
         u.pivot.x -= xoff;
         for j in 0 .. u.members.len() {
             u.members[j].x -= xoff;
@@ -329,6 +337,32 @@ mod tests {
         for i in 0..n as usize {
           assert_eq!(sources[i], correct_sources[i]);
         }
+    }
+
+	  #[test]
+    fn centering_state() {
+        let s = input_to_states(Input::from_json("problems/problem_0.json"))[0].clone();
+        let mut minx = 500;
+        let mut maxx = -500;
+        let mut miny = 500;
+        for u in s.unit_sequence.iter() {
+            for c in u.members.iter() {
+                if c.x < minx {
+                    minx = c.x;
+                }
+                if c.x > maxx {
+                    maxx = c.x;
+                }
+                if c.y < miny {
+                    miny = c.y;
+                }
+            }
+        }
+        assert_eq!(miny, 0);
+        let widl = minx;
+        let widr = s.width - 1 - maxx;
+        println!("minx {} maxx {} [widl {} widr {}]", minx, maxx, widl, widr);
+        assert!(widl <= widr);
     }
 
 }
