@@ -206,7 +206,21 @@ pub fn input_to_states(input: Input) -> Vec<State> {
     input.sourceSeeds.iter().map( |&s| {
         let mut seq: Vec<Unit> = Vec::with_capacity(input.sourceLength as usize);
         for i in get_source_order(s, input.sourceLength) {
-            seq.push(input.units[((i as usize) % input.units.len()) as usize].clone());
+            let mut unit = input.units[((i as usize) % input.units.len()) as usize].clone();
+            let mut left = 1000;
+            let mut right = 0;
+            let mut top = 1000;
+            for member in unit.members.iter() {
+                if member.x < left { left = member.x }
+                if member.x > right { right = member.x }
+                if member.y < top { top = member.y }
+            }
+            if top > 0 { panic!("The top block has a y of {}, I don't know how to move it up to zero?!?!!??!?!?!", top); }
+            let shift: i32 = (input.width - right - left) / 2;
+            for i in (0..unit.members.len()) {
+                unit.members[i].x += shift;
+            }
+            seq.push(unit);
         }
         let mut state = State::with_size(input.width, input.height);
         state.unit_sequence = seq;

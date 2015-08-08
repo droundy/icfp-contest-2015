@@ -176,6 +176,7 @@ mod tests {
 
     #[test]
     fn play_a_game() {
+        use std::thread;
         use Command::Move;
 
         let mut states = input_to_states(Input::from_json("problems/problem_0.json"));
@@ -183,15 +184,19 @@ mod tests {
         let mut s0 = states[0].clone();
 
         while !s0.game_over {
-            s0 = s0.apply(Move(SE));
-            cmds.push(Move(SE));
-            if !s0.game_over {
-                s0 = s0.apply(Move(SW));
-                cmds.push(Move(SW));
+            for &cmd in [Move(SE), Move(SW)].iter() {
+                if !s0.game_over {
+                    s0 = s0.apply(cmd);
+                    cmds.push(cmd);
+                    println!("{}[2J", 27 as char);
+                    println!("Score: {}", s0.score);
+                    println!("{}", s0.visualize());
+                    thread::sleep_ms(100);
+                }
             }
         }
         println!("Solution: {}", commands_to_string(cmds.clone()));
         println!("score: {}", s0.score);
-        assert!(s0.score > 0);
+
     }
 }
