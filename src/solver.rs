@@ -200,6 +200,7 @@ impl Solver for MonteCarlo {
         }, best_state.score)
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -256,4 +257,23 @@ mod tests {
             assert!(snew.score >= s.score);
         }
     }
+}
+
+pub struct BottomUp;
+
+impl BottomUp {
+    fn new() -> Self { BottomUp }
+}
+
+impl Solver for BottomUp {
+    fn name(&self) -> String { "bottomup".into() }
+
+    fn solve(&self, state: &State, input: &Input) -> (Solution, Score) {
+        unimplemented!()
+    }
+}
+
+fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
+
+    unimplemented!()
 }
