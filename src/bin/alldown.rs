@@ -22,8 +22,8 @@ fn main() {
         let num_states = states.len();
         for state in states {
             let (solution, score) = solver::AllDown::new().solve(&state, &input);
-            if options.animate {
-                solution.animate(10);
+            if let Some(a) = options.animate {
+                solution.animate(a);
             }
             solutions.push(solution);
 
@@ -32,7 +32,7 @@ fn main() {
         }
         println!("problem score[{}]: {} ({} and {})", i, problemscore as f64 / num_states as f64,
                  problemscore, num_states);
-        if options.animate {
+        if let Some(a) = options.animate {
             thread::sleep_ms(1000);
         }
     }
