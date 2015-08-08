@@ -133,25 +133,19 @@ impl State {
     }
 }
 
-impl From<Input> for Vec<State> {
-    fn from(input: Input) -> Self {
-        input.sourceSeeds.iter().map( |&s| {
-            let mut seq: Vec<Unit> = Vec::with_capacity(input.sourceLength as usize);
-            for i in get_source_order(s, input.sourceLength) {
-                seq.push(input.units[((i as usize) % input.units.len()) as usize].clone());
-            }
-            let mut state = State::with_size(input.width, input.height);
-            state.unit_sequence = seq;
-            for &cell in input.filled.iter() {
-                state.filled(cell);
-            }
-            state
-        }).collect()
-    }
-}
-
-pub fn input_to_states(i: Input) -> Vec<State> {
-    unimplemented!()
+pub fn input_to_states(input: Input) -> Vec<State> {
+    input.sourceSeeds.iter().map( |&s| {
+        let mut seq: Vec<Unit> = Vec::with_capacity(input.sourceLength as usize);
+        for i in get_source_order(s, input.sourceLength) {
+            seq.push(input.units[((i as usize) % input.units.len()) as usize].clone());
+        }
+        let mut state = State::with_size(input.width, input.height);
+        state.unit_sequence = seq;
+        for &cell in input.filled.iter() {
+            state.filled(cell);
+        }
+        state
+    }).collect()
 }
 
 pub fn string_to_commands(s: &str) -> Vec<Command> {

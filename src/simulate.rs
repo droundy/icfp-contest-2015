@@ -116,6 +116,11 @@ impl State {
             }
         }
         self.score += size + 100 * (1 + ls) * ls / 2;
+
+        // need to make sure new unit starts in valid place, or just end game
+        if self.unit_sequence[0].members.iter().any(|&c| self.is_invalid(c)) {
+            self.game_over = true;
+        }
     }
 }
 
@@ -173,17 +178,19 @@ mod tests {
     fn play_a_game() {
         use Command::Move;
 
-        let mut states = Vec::<State>::from(Input::from_json("problems/problem_0.json"));
+        let mut states = input_to_states(Input::from_json("problems/problem_0.json"));
         let mut cmds: Vec<Command> = Vec::new();
         let mut s0 = states[0].clone();
 
         while !s0.game_over {
             s0 = s0.apply(Move(SE));
             cmds.push(Move(SE));
-            s0 = s0.apply(Move(SW));
-            cmds.push(Move(SW));
+            if !s0.game_over {
+                s0 = s0.apply(Move(SW));
+                cmds.push(Move(SW));
+            }
         }
-        println!("Commands: {:?}, Solution: {}", cmds, commands_to_string(cmds.clone()));
+        println!("Solution: {}", commands_to_string(cmds.clone()));
         println!("score: {}", s0.score);
         assert!(s0.score > 0);
     }
