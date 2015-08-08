@@ -10,7 +10,9 @@ pub trait Solver {
 
 pub fn name_to_solver(name: &str) -> Box<Solver> {
     let foo: Box<Solver> = Box::new(AllDown::new());
-    let solvers: Vec<Box<Solver>> = vec![Box::new(AllDown::new())];
+    let solvers: Vec<Box<Solver>> = vec![Box::new(AllDown::new()),
+                                         Box::new(SolverSE::new()),
+                                         ];
     for s in solvers.into_iter() {
         if s.name() == name {
             return s;
@@ -51,7 +53,35 @@ impl Solver for AllDown {
         (Solution {
             problemId: input.id,
             seed: s.seed,
-            tag: Some(format!("alldown[{},{}] = {}", input.id, s.seed, s.score)),
+            tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+            solution: commands_to_string(cmds.clone()),
+        }, s.score as usize)
+    }
+}
+
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
+pub struct SolverSE;
+
+impl SolverSE {
+    pub fn new() -> SolverSE { SolverSE }
+}
+
+impl Solver for SolverSE {
+    fn name(&self) -> String { format!("se") }
+    fn solve(&self, state: &State, input: &Input) -> (Solution, usize) {
+        let mut cmds: Vec<Command> = Vec::new();
+        let mut s = state.clone();
+
+        while !s.game_over {
+            s = s.apply(Move(SE));
+            cmds.push(Move(SE));
+        }
+
+        (Solution {
+            problemId: input.id,
+            seed: s.seed,
+            tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
             solution: commands_to_string(cmds.clone()),
         }, s.score as usize)
     }
