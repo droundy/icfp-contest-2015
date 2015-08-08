@@ -7,6 +7,7 @@ use std::collections::HashSet;
 pub mod simulate;
 pub mod opts;
 pub mod in_out;
+pub mod solver;
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, RustcDecodable, RustcEncodable)]
 pub struct Cell {
