@@ -6,6 +6,7 @@ use davar::Direction::*;
 use davar::Command::*;
 use rustc_serialize::json;
 use std::process;
+use davar::solver::{Solver};
 
 fn main() {
     let options = opts::opts();
@@ -19,33 +20,11 @@ fn main() {
         let states = input_to_states(&input);
         let num_states = states.len();
         for state in states {
-            let mut cmds: Vec<Command> = Vec::new();
-            let mut s = state.clone();
-            // println!("Starting position");
-            // println!("{}", s.visualize());
+            let (solution, score) = solver::AllDown::new().solve(&state, &input);
+            solutions.push(solution);
 
-            while !s.game_over {
-                for &cmd in [Move(SE), Move(SW)].iter() {
-                    if !s.game_over {
-                        s = s.apply(cmd);
-                        cmds.push(cmd);
-                        // println!("Score: {}", s.score);
-                        // println!("{}", s.visualize());
-                        // thread::sleep_ms(100);
-                    }
-                }
-            }
-            // println!("Solution[{},{}]: {}", i, s.seed, commands_to_string(cmds.clone()));
-            // println!("score[{},{}]: {}", i, s.seed, s.score);
-            totalscore += s.score;
-            problemscore += s.score;
-
-            solutions.push(Solution {
-                problemId: input.id,
-                seed: s.seed,
-                tag: Some(format!("alldown[{},{}] = {}", i, s.seed, s.score)),
-                solution: commands_to_string(cmds.clone()),
-            });
+            totalscore += score;
+            problemscore += score;
         }
         if options.submit {
             println!("I am submitting solutions for {}.", i);

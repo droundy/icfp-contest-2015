@@ -2,17 +2,20 @@ use super::*;
 use super::Direction::*;
 use super::Command::*;
 
-trait Solver {
-    fn solve(&State, &Input) -> Solution;
+pub trait Solver {
+    fn new() -> Self;
 
-    fn name() -> String;
+    fn solve(&self, &State, &Input) -> (Solution, usize);
+
+    fn name(&self) -> String;
 }
 
 pub struct AllDown;
 
 impl Solver for AllDown {
-    fn name() -> String { format!("alldown") }
-    fn solve(state: &State, input: &Input) -> Solution {
+    fn new() -> AllDown { AllDown }
+    fn name(&self) -> String { format!("alldown") }
+    fn solve(&self, state: &State, input: &Input) -> (Solution, usize) {
         let mut cmds: Vec<Command> = Vec::new();
         let mut s = state.clone();
         // println!("Starting position");
@@ -32,11 +35,11 @@ impl Solver for AllDown {
         // println!("Solution[{},{}]: {}", i, s.seed, commands_to_string(cmds.clone()));
         // println!("score[{},{}]: {}", i, s.seed, s.score);
 
-        Solution {
+        (Solution {
             problemId: input.id,
             seed: s.seed,
             tag: Some(format!("alldown[{},{}] = {}", input.id, s.seed, s.score)),
             solution: commands_to_string(cmds.clone()),
-        }
+        }, s.score as usize)
     }
 }
