@@ -11,8 +11,8 @@ fn main() {
     let options = opts::opts();
 
     println!("all down!");
-    let mut solutions = Vec::new();
     for i in 0..24 {
+        let mut solutions = Vec::new();
         let fname = format!("problems/problem_{}.json", i);
         println!("all down {}", fname);
         let input = Input::from_json("problems/problem_6.json");
@@ -40,16 +40,16 @@ fn main() {
             solutions.push(Solution {
                 problemId: input.id,
                 seed: s.seed,
-                tag: Some(format!("alldown {}", s.score)),
+                tag: Some(format!("alldown[{}]", i)),
                 solution: commands_to_string(cmds.clone()),
             });
         }
-    }
-    if options.submit {
-        println!("I am submitting solutions.");
-        in_out::submit_solutions(&solutions);
-    } else {
-        println!("Not submitting solutions.");
+        if options.submit {
+            println!("I am submitting solutions.");
+            in_out::submit_solutions(&solutions);
+        } else {
+            println!("Not submitting solutions.");
+        }
     }
 
 }
