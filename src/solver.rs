@@ -1,6 +1,7 @@
 use super::*;
 use super::Direction::*;
 use super::Command::*;
+use super::simulate::Lattice;
 
 pub type Score = i32;
 
@@ -273,7 +274,32 @@ impl Solver for BottomUp {
     }
 }
 
-fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
+fn d2(a: Cell, b: Cell) -> i32 {
+    let v: Lattice = Lattice::from(b) - Lattice::from(a);
+    v.x.pow(2) + v.y.pow(2)
+}
 
-    unimplemented!()
+fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
+    let unit = &state.unit_sequence[0];
+
+    let min2 = unit.members.iter().map(|&m| d2(unit.pivot, m)).min().unwrap();
+    let min = (min2 as f32).sqrt() as i32;
+
+    let mut valid_positions: Vec<Unit> = Vec::new();
+
+    for x in (-min..state.width + min) {
+        for y in (-min..state.height + min) {
+            let delta = Lattice::new(x, y);
+            let pivot = Cell::from(Lattice::from(unit.pivot) + delta);
+            let members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
+            let mut unit = Unit{pivot: pivot, members: members.collect()};
+            for _ in (0..6) {
+                if !state.is_unit_invalid(&unit) {
+                    valid_positions.push(unit.clone());
+                }
+                unit.rotate(Clock::Wise);
+            }
+        }
+    }
+    valid_positions
 }
