@@ -39,12 +39,12 @@ impl Sub<Lattice> for Lattice {
 }
 impl From<Cell> for Lattice {
     fn from(c: Cell) -> Lattice {
-        Lattice::new(c.x + c.y/2, c.y)
+        Lattice::new(c.x - c.y/2, c.y)
     }
 }
 impl From<Lattice> for Cell {
     fn from(c: Lattice) -> Cell {
-        Cell::new(c.x - c.y/2, c.y)
+        Cell::new(c.x + c.y/2, c.y)
     }
 }
 
@@ -113,8 +113,13 @@ impl State {
             return s;
         }
         s.unit_sequence[0].command(c);
-        // FIXME need to check here if we have visited this
-        // position/orientation!
+        s.visited.push(self.unit_sequence[0].clone());
+        if s.visited.contains(&s.unit_sequence[0]) {
+            // We have visited this position/orientation before!
+            s.game_over = true;
+            s.score = 0;
+            return s;
+        }
         if s.unit_sequence[0].members.iter().any(|&c| self.is_invalid(c)) {
             // undo any rotation or translation we have done
             for i in 0..s.unit_sequence[0].members.len() {
@@ -122,6 +127,13 @@ impl State {
             }
             s.unit_sequence[0].pivot = self.unit_sequence[0].pivot;
             s.lock_unit();
+        }
+        // If we moved down, then we will never return to our former
+        // location, so we can optimize by clearing the former
+        // history.
+        match c {
+            Command::Move(SE) | Command::Move(SW) => s.visited.truncate(0),
+            _ => ()
         }
         s
     }
@@ -131,12 +143,8 @@ impl State {
         for c in u.members {
             *self.filled(c) = true;
         }
-        for x in 0..self.width {
-            for y in 0..self.height {
-                let c = Cell{ x: x, y: y };
-                *self.visited(c) = false;
-            }
-        }
+        // clear out visited since new unit hasn't visited anything
+        self.visited.truncate(0);
         self.unit_sequence = self.unit_sequence[1..].into();
         let mut ls = 0;
         let w = self.width as usize;
@@ -180,6 +188,116 @@ mod tests {
     use super::*;
     use super::super::*;
     use Direction::*;
+
+    #[test]
+    fn to_from_lattice() {
+        let c = Cell::new(5,3);
+        let l = Lattice::from(c);
+        let c1 = Cell::from(l);
+        assert_eq!(c, c1);
+    }
+
+    #[test]
+    fn game_loss_on_revisit() {
+        println!("");
+        let mut s0 = State::new();
+        let u = Unit{ members: vec![Cell{ x: 4, y: 5 },Cell{ x: 5, y: 5 }],
+                      pivot: Cell{ x: 4, y: 5}
+        };
+        s0.score = 100;
+        s0.unit_sequence.push(u);
+        let s0 = s0; // mark s0 immutable now for clarity.
+        let mut s = s0.apply(Command::Move(W));
+        println!("{}", s.visualize());
+        s = s.apply(Command::Move(E));
+        println!("{}", s.visualize());
+        assert_eq!(true, s.game_over);
+        assert_eq!(0, s.score);
+
+        s = s0.clone();
+        println!("Rotating clockwise");
+        println!("{}", s.visualize());
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        assert_eq!(true, s.game_over);
+        assert_eq!(0, s.score);
+
+        s = s0.clone();
+        println!("Rotating counterclockwise");
+        println!("{}", s.visualize());
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        assert_eq!(true, s.game_over);
+        assert_eq!(0, s.score);
+
+
+        s = s0.clone();
+        println!("Combining rotation with translation");
+        println!("{}", s.visualize());
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        s = s.apply(Command::Move(W));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Move(W));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Move(E));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Move(E));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        assert_eq!(true, s.game_over);
+        assert_eq!(0, s.score);
+
+    }
 
     #[test]
     fn apply_works() {

@@ -78,7 +78,7 @@ pub struct State {
     pub width: i32,
     pub height: i32,
     pub filled_array: Vec<bool>,
-    pub visited_array: Vec<bool>,
+    pub visited: Vec<Unit>,
     pub unit_sequence: Vec<Unit>, // holds the actual sequence of units
     pub ls_old: i32,
     pub score: i32,
@@ -91,7 +91,7 @@ impl State {
             width: 10,
             height: 10,
             filled_array: vec![false; 10*10],
-            visited_array: vec![false; 10*10],
+            visited: Vec::new(),
             unit_sequence: Vec::new(),
             ls_old: 0,
             score: 0,
@@ -104,7 +104,7 @@ impl State {
             width: width,
             height: height,
             filled_array: vec![false; (width*height) as usize],
-            visited_array: vec![false; (width*height) as usize],
+            visited: Vec::with_capacity(3*width as usize),
             unit_sequence: Vec::new(),
             ls_old: 0,
             score: 0,
@@ -120,17 +120,6 @@ impl State {
         }
         self.filled_array[c.x as usize + (c.y as usize)*(self.width as usize)]
     }
-    fn visited(&mut self, c: Cell) -> &mut bool {
-        &mut self.visited_array[c.x as usize + (c.y as usize)*(self.width as usize)]
-    }
-    fn is_visited(&self, c: Cell) -> bool {
-        if c.x < 0 || c.x >= self.width || c.y < 0 || c.y >= self.height {
-            return false;
-        }
-        self.visited_array[c.x as usize + (c.y as usize)*(self.width as usize)]
-    }
-
-
 
     fn visualize(&self) -> String {
 
