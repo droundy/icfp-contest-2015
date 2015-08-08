@@ -128,6 +128,8 @@ impl State {
         self.visited_array[c.x as usize + (c.y as usize)*(self.width as usize)]
     }
 
+
+
     fn visualize(&self) -> String {
 
         // print stuff here, but eventually return a string.
@@ -137,21 +139,62 @@ impl State {
         }
 
         let mut out_str = Vec::with_capacity( (2*self.width + 2) as usize * self.height as usize);
-        for y in 0..self.height as usize {
-          if y%2==1 { out_str.push(' ' as u8); }
+        if (self.unit_sequence.len() > 0) {
+            let ref unit_array = self.unit_sequence[0].members;
+            let ref pivot = self.unit_sequence[0].pivot;
 
-          for x in 0..self.width as usize {
-            out_str.push(' ' as u8);
-            if self.is_filled(Cell::new(x as i32, y as i32) ) {
-              out_str.push('O' as u8);
-            }
-            else {
-              out_str.push(' ' as u8);
-            }
-          }
+            for y in 0..self.height as usize {
+              if y%2==1 { out_str.push(' ' as u8); }
 
-          if y%2==0 { out_str.push(' ' as u8); }
-          out_str.push('\n' as u8);
+              for x in 0..self.width as usize {
+                out_str.push(' ' as u8);
+
+                if (self.is_filled(Cell::new(x as i32, y as i32) )) {    // Is cell filled?
+                    out_str.push('X' as u8);
+                }
+                else if (x==(pivot.x as usize) && y==(pivot.y as usize)) {   // No, is cell a pivot?
+                        out_str.push('*' as u8);
+                    }
+                else {
+                    let mut is_blank = true;
+                    for un in unit_array {   // No, is cell a non-pivot unit cell?
+                        if (x==(un.x as usize) && y==(un.y as usize)) {
+                            is_blank = false;
+                        }
+                    }
+                    if (is_blank) {
+                        out_str.push(' ' as u8);
+                    }
+                    else {
+                        out_str.push('O' as u8);
+                    }
+                }
+              }
+              if y%2==0 {
+                  out_str.push(' ' as u8);
+              }
+              out_str.push('\n' as u8);
+            }
+        }
+        else {
+            for y in 0..self.height as usize {
+              if y%2==1 { out_str.push(' ' as u8); }
+
+              for x in 0..self.width as usize {
+                out_str.push(' ' as u8);
+
+                if (self.is_filled(Cell::new(x as i32, y as i32) )) {
+                    out_str.push('X' as u8);
+                }
+                else {
+                    out_str.push(' ' as u8);
+                }
+              }
+              if y%2==0 {
+                  out_str.push(' ' as u8);
+              }
+              out_str.push('\n' as u8);
+            }
         }
 
         String::from_utf8(out_str).unwrap()
