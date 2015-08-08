@@ -300,6 +300,47 @@ mod tests {
     }
 
     #[test]
+    fn game_loss_on_revisit_with_symmetry() {
+        println!("");
+        let mut s0 = State::new();
+        let u = Unit{ members: vec![Cell{ x: 3, y: 5 },Cell{ x: 4, y: 5 },Cell{ x: 5, y: 5 }],
+                      pivot: Cell{ x: 4, y: 5}
+        };
+        s0.score = 100;
+        s0.unit_sequence.push(u);
+        let s0 = s0; // mark s0 immutable now for clarity.
+
+        let mut s = s0.clone();
+        println!("Rotating clockwise");
+        println!("{}", s.visualize());
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Wise));
+        println!("{}", s.visualize());
+        assert_eq!(true, s.game_over);
+        assert_eq!(0, s.score);
+
+        s = s0.clone();
+        println!("Rotating counterclockwise");
+        println!("{}", s.visualize());
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        assert_eq!(false, s.game_over);
+        assert_eq!(100, s.score);
+        s = s.apply(Command::Rotate(Clock::Counter));
+        println!("{}", s.visualize());
+        assert_eq!(true, s.game_over);
+        assert_eq!(0, s.score);
+
+    }
+
+    #[test]
     fn apply_works() {
         let mut s0 = State::new();
         let u = Unit{ members: vec![Cell{ x: 5, y: 5 }],

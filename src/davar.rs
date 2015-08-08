@@ -2,6 +2,7 @@ extern crate num;
 extern crate rustc_serialize;
 
 use std::vec::Vec;
+use std::collections::HashSet;
 
 pub mod simulate;
 
@@ -19,10 +20,17 @@ impl Cell {
   }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Hash, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Eq, Clone, Hash, RustcDecodable, RustcEncodable)]
 pub struct Unit {
     pub members: Vec<Cell>,
     pub pivot: Cell,
+}
+impl PartialEq<Unit> for Unit {
+    fn eq(&self, other: &Unit) -> bool {
+        let set_a: HashSet<Cell> = self.members.clone().into_iter().collect();
+        let set_b: HashSet<Cell> = other.members.clone().into_iter().collect();
+        self.pivot == other.pivot && set_a == set_b
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
