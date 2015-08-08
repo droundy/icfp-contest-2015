@@ -109,6 +109,7 @@ impl State {
             game_over: false,
         }
     }
+    #[allow(dead_code)]
     fn new() -> State {
         State::with_size(10,10)
     }

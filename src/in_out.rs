@@ -100,5 +100,5 @@ pub fn submit_solutions(s: &Vec<Solution>) {
         .arg("-H").arg("Content-Type: application/json")
         .arg("-d").arg(json::encode(s).unwrap())
         .arg("https://davar.icfpcontest.org/teams/97/solutions")
-        .spawn().unwrap().wait();
+        .spawn().unwrap().wait().unwrap();
 }

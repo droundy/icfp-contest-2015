@@ -11,7 +11,7 @@ pub trait Solver {
 }
 
 pub fn name_to_solver(name: &str) -> Box<Solver> {
-    let foo: Box<Solver> = Box::new(AllDown::new());
+    // let foo: Box<Solver> = Box::new(AllDown::new());
     let solvers: Vec<Box<Solver>> = vec![Box::new(AllDown::new()),
                                          Box::new(SolverSE::new()),
                                          Box::new(MonteCarlo::new()),

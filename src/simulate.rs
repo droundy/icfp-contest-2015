@@ -386,10 +386,9 @@ mod tests {
 
     #[test]
     fn play_a_game() {
-        use std::thread;
         use Command::Move;
 
-        let mut states = input_to_states(&Input::from_json("problems/problem_0.json"));
+        let states = input_to_states(&Input::from_json("problems/problem_0.json"));
         let mut cmds: Vec<Command> = Vec::new();
         let mut s0 = states[0].clone();
         println!("Starting position");
@@ -402,7 +401,6 @@ mod tests {
                     cmds.push(cmd);
                     println!("Score: {}", s0.score);
                     println!("{}", s0.visualize());
-                    // thread::sleep_ms(100);
                 }
             }
         }
@@ -414,8 +412,7 @@ mod tests {
 
     #[test]
     fn official_sample() {
-        use std::thread;
-        use Command::Move;
+        //use Command::Move;
 
         let states = input_to_states(&Input::from_json("problems/problem_6.json"));
         let mut s0 = states[0].clone();
@@ -429,7 +426,6 @@ mod tests {
             s0 = s0.apply(c);
             println!("Score: {}", s0.score);
             println!("{}", s0.visualize());
-            // thread::sleep_ms(100);
         }
         println!("score: {}", s0.score);
 

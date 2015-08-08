@@ -2,13 +2,14 @@ extern crate davar;
 extern crate rustc_serialize;
 
 use davar::*;
-use davar::Direction::*;
-use davar::Command::*;
-use rustc_serialize::json;
-use std::process;
+// use davar::Direction::*;
+// use davar::Command::*;
+// use rustc_serialize::json;
+// use std::process;
 use davar::solver::{Solver};
 use std::thread;
 
+#[allow(dead_code)]
 fn main() {
     let options = opts::opts();
 
@@ -35,7 +36,7 @@ fn main() {
         println!("{} score[{}]: {} ({} and {})", solver.name(),
                  i, problemscore as f64 / num_states as f64,
                  problemscore, num_states);
-        if let Some(a) = options.animate {
+        if let Some(_) = options.animate {
             thread::sleep_ms(1000);
         }
     }
