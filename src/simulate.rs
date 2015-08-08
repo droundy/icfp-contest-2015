@@ -165,7 +165,7 @@ impl State {
             }
             if killme {
                 ls += 1;
-                for i in (w .. y*w).rev() {
+                for i in (w .. (y+1)*w).rev() {
                     self.filled_array[i] = self.filled_array[i-w];
                 }
                 for x in 0 .. w {
