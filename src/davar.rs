@@ -29,10 +29,12 @@ pub struct Unit {
 pub enum Direction { W, E, SW, SE }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
+pub enum Clock { Wise, Counter }
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Command {
     Move(Direction),
-    RotateClockwise,
-    RotateCounterClockwise,
+    Rotate(Clock),
 }
 
 impl Command {
@@ -44,8 +46,8 @@ impl Command {
             Move(E) => 'b',
             Move(SW) => 'a',
             Move(SE) => 'l',
-            RotateClockwise => 'd',
-            RotateCounterClockwise => 'k',
+            Rotate(Clock::Wise) => 'd',
+            Rotate(Clock::Counter) => 'k',
         }
     }
 }
@@ -244,8 +246,8 @@ pub fn string_to_commands(s: &str) -> Vec<Command> {
             'b' | 'c' | 'e' | 'f' | 'y' | '2' => out.push(Command::Move(E)),
             'a' | 'g' | 'h' | 'i' | 'j' | '4' => out.push(Command::Move(SW)),
             'l' | 'm' | 'n' | 'o' | ' ' | '5' => out.push(Command::Move(SE)),
-            'd' | 'q' | 'r' | 'v' | 'z' | '1' => out.push(Command::RotateClockwise),
-            'k' | 's' | 't' | 'u' | 'w' | 'x' => out.push(Command::RotateCounterClockwise),
+            'd' | 'q' | 'r' | 'v' | 'z' | '1' => out.push(Command::Rotate(Clock::Wise)),
+            'k' | 's' | 't' | 'u' | 'w' | 'x' => out.push(Command::Rotate(Clock::Counter)),
             '\t' | '\n' | '\r' => (),
             _ => unreachable!(),
         };
@@ -294,11 +296,11 @@ mod tests {
         assert_eq!(string_to_commands("pack"), vec![Command::Move(W),
                                                     Command::Move(SW),
                                                     Command::Move(E),
-                                                    Command::RotateCounterClockwise]);
+                                                    Command::Rotate(Clock::Counter)]);
         assert_eq!(string_to_commands("PACK"), vec![Command::Move(W),
                                                     Command::Move(SW),
                                                     Command::Move(E),
-                                                    Command::RotateCounterClockwise]);
+                                                    Command::Rotate(Clock::Counter)]);
         assert_eq!(string_to_commands("ei! "), vec![Command::Move(E),
                                                     Command::Move(SW),
                                                     Command::Move(W),

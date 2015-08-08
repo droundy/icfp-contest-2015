@@ -1,5 +1,52 @@
 use super::*;
 use Direction::*;
+use std::ops::{Sub,Add};
+
+/// A vector in a Bravais lattice with basis vectors in the E and SE
+/// directions.  We can define addition and scalar multiplication
+/// meaningfully on this lattice.  And most importantly, rotation is
+/// easy.
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
+pub struct Lattice {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl Lattice {
+    fn new(x: i32, y:i32) -> Lattice {
+        Lattice{x: x, y: y}
+    }
+    fn rotated(&self, c: Clock) -> Lattice {
+        match c {
+            Clock::Wise => Lattice::new(-self.y, self.x + self.y),
+            Clock::Counter => Lattice::new(self.y + self.x, -self.x),
+        }
+    }
+}
+impl Add<Lattice> for Lattice {
+    type Output = Lattice;
+
+    fn add(self, rhs: Lattice) -> Lattice {
+        Lattice::new(self.x + rhs.x, self.y + rhs.y)
+    }
+}
+impl Sub<Lattice> for Lattice {
+    type Output = Lattice;
+
+    fn sub(self, rhs: Lattice) -> Lattice {
+        Lattice::new(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+impl From<Cell> for Lattice {
+    fn from(c: Cell) -> Lattice {
+        Lattice::new(c.x + c.y/2, c.y)
+    }
+}
+impl From<Lattice> for Cell {
+    fn from(c: Lattice) -> Cell {
+        Cell::new(c.x - c.y/2, c.y)
+    }
+}
 
 impl Cell {
     fn moved(&self, c: Direction) -> Cell {
@@ -28,6 +75,26 @@ impl Cell {
     }
 }
 
+impl Unit {
+    fn command(&mut self, c: Command) {
+        let piv = Lattice::from(self.pivot);
+        match c {
+            Command::Move(d) => self.pivot = self.pivot.moved(d),
+            _ => (),
+        };
+        match c {
+            Command::Move(d) =>         for i in 0 .. self.members.len() {
+                self.members[i] = self.members[i].moved(d);
+            },
+            Command::Rotate(r) =>
+                for i in 0 .. self.members.len() {
+                    let dc = Lattice::from(self.members[i]) - piv;
+                    self.members[i] = Cell::from(piv + dc.rotated(r));
+                },
+        }
+    }
+}
+
 impl State {
     fn is_invalid(&self, c: Cell) -> bool {
         if c.x < 0 || c.x >= self.width || c.y >= self.height || c.y < 0 {
@@ -45,42 +112,17 @@ impl State {
             s.score = 0;
             return s;
         }
-        match c {
-            Command::Move(d) => {
-                println!("moving {:?} to the {:?}", s.unit_sequence[0], d);
-                s.unit_sequence[0].pivot = s.unit_sequence[0].pivot.moved(d);
-                let mut will_lock = false;
-                for i in 0..s.unit_sequence[0].members.len() {
-                    let c = s.unit_sequence[0].members[i].moved(d);
-                    s.unit_sequence[0].members[i] = c;
-                    // FIXME need to fix visited!
-                    // if self.is_visited(c) {
-                    //     s.game_over = true;
-                    //     s.score = 0;
-                    //     return s;
-                    // }
-                    if self.is_invalid(c) {
-                        // FIXME need to lock unit
-                        will_lock = true;
-                        break;
-                    } else {
-                        *s.visited(c) = true;
-                    }
-                }
-                if will_lock {
-                    // undo any rotation or translation we have done
-                    for i in 0..s.unit_sequence[0].members.len() {
-                        s.unit_sequence[0].members[i] = self.unit_sequence[0].members[i];
-                    }
-                    s.unit_sequence[0].pivot = self.unit_sequence[0].pivot;
-                    s.lock_unit();
-                }
-            },
-            Command::RotateClockwise => {
-            },
-            Command::RotateCounterClockwise => {
-            },
-        };
+        s.unit_sequence[0].command(c);
+        // FIXME need to check here if we have visited this
+        // position/orientation!
+        if s.unit_sequence[0].members.iter().any(|&c| self.is_invalid(c)) {
+            // undo any rotation or translation we have done
+            for i in 0..s.unit_sequence[0].members.len() {
+                s.unit_sequence[0].members[i] = self.unit_sequence[0].members[i];
+            }
+            s.unit_sequence[0].pivot = self.unit_sequence[0].pivot;
+            s.lock_unit();
+        }
         s
     }
     fn lock_unit(&mut self) {
