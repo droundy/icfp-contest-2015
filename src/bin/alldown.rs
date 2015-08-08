@@ -12,9 +12,9 @@ fn main() {
     let options = opts::opts();
 
     let mut totalscore = 0;
+    let mut solutions = Vec::new();
     for i in 0..24 {
         let mut problemscore = 0;
-        let mut solutions = Vec::new();
         let fname = format!("problems/problem_{}.json", i);
         let input = Input::from_json(fname);
         let states = input_to_states(&input);
@@ -26,12 +26,12 @@ fn main() {
             totalscore += score;
             problemscore += score;
         }
-        if options.submit {
-            println!("I am submitting solutions for {}.", i);
-            in_out::submit_solutions(&solutions);
-        }
         println!("problem score[{}]: {} ({} and {})", i, problemscore as f64 / num_states as f64,
                  problemscore, num_states);
+    }
+    if options.submit {
+        //println!("I am submitting solutions for {}.", i);
+        in_out::submit_solutions(&solutions);
     }
     println!("total score: {}", totalscore);
 
