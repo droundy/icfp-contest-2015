@@ -102,6 +102,13 @@ impl State {
         }
         self.is_filled(c)
     }
+    pub fn apply_sequence(&self, cs: &[Command]) -> Self {
+        let mut s = self.clone();
+        for c in cs.iter() {
+            s = s.apply(*c);
+        }
+        s
+    }
     pub fn apply(&self, c: Command) -> Self {
         let mut s = self.clone();
         if s.game_over {

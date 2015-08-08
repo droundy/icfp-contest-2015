@@ -15,7 +15,7 @@ fn main() {
     let mut totalscore = 0;
     let mut solutions = Vec::new();
     let solver = solver::name_to_solver(&options.solver);
-    for i in 0..24 {
+    for i in 0..25 {
         let mut problemscore = 0;
         let fname = format!("problems/problem_{}.json", i);
         let input = Input::from_json(fname);
