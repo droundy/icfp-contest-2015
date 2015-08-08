@@ -3,17 +3,30 @@ use super::Direction::*;
 use super::Command::*;
 
 pub trait Solver {
-    fn new() -> Self;
-
     fn solve(&self, &State, &Input) -> (Solution, usize);
 
     fn name(&self) -> String;
 }
 
+pub fn name_to_solver(name: &str) -> Box<Solver> {
+    let foo: Box<Solver> = Box::new(AllDown::new());
+    let solvers: Vec<Box<Solver>> = vec![Box::new(AllDown::new())];
+    for s in solvers.into_iter() {
+        if s.name() == name {
+            return s;
+        }
+    }
+    Box::new(AllDown::new())
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub struct AllDown;
 
+impl AllDown {
+    pub fn new() -> AllDown { AllDown }
+}
+
 impl Solver for AllDown {
-    fn new() -> AllDown { AllDown }
     fn name(&self) -> String { format!("alldown") }
     fn solve(&self, state: &State, input: &Input) -> (Solution, usize) {
         let mut cmds: Vec<Command> = Vec::new();

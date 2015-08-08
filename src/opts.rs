@@ -11,6 +11,7 @@ pub struct DavarOptions {
     pub time_limit: Option<usize>,
     pub memory_limit: Option<usize>,
     pub phrases_of_power: Vec<String>,
+    pub solver: String,
 }
 
 pub fn opts() -> DavarOptions {
@@ -18,9 +19,10 @@ pub fn opts() -> DavarOptions {
     let program = args[0].clone();
 
     let mut opts = getopts::Options::new();
+    opts.optflag("", "submit", "submit to server");
+    opts.optopt("", "solver", "name of solver algorithm", "ALGORITHM");
     opts.optopt("c", "", "number of cores", "NCORE");
     opts.optflag("h", "help", "print this help menu");
-    opts.optflag("", "submit", "submit to server");
     opts.optopt("f", "", "input filename", "FILENAME");
     opts.optopt("t", "", "time limit", "SECONDS");
     opts.optopt("m", "", "memory limit", "MEGABYTES");
@@ -41,6 +43,7 @@ pub fn opts() -> DavarOptions {
         time_limit: None,
         memory_limit: None,
         phrases_of_power: matches.opt_strs("p"),
+        solver: "alldone".into(),
     };
     if let Some(nc) = matches.opt_str("c") {
         davar_options.ncores = nc.parse().unwrap();
@@ -50,6 +53,9 @@ pub fn opts() -> DavarOptions {
     }
     if let Some(m) = matches.opt_str("m") {
         davar_options.memory_limit = Some(m.parse().unwrap());
+    }
+    if let Some(alg) = matches.opt_str("solver") {
+        davar_options.solver = alg;
     }
     davar_options
 }
