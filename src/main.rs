@@ -28,6 +28,7 @@ fn main() {
                 solution.animate(a);
             }
 
+            println!("  cmd: {}", solution.solution);
             solutions.push(solution);
 
             totalscore += score;

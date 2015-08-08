@@ -61,14 +61,18 @@ impl Solution {
         println!("{}", state.visualize());
         println!("Score: {}", state.score);
 
-        let cmds = string_to_commands(&self.solution[..]);
-        for cmd in cmds {
+        for ch in self.solution.chars() {
+            let cmd = string_to_commands(&format!("{}", ch));
             sleep_ms(sleep_in_ms);
-            println!("{}[2J", 27 as char);
-            println!("Problem {}, seed {}:", self.problemId, self.seed);
-            state = state.apply(cmd);
+            if sleep_in_ms != 0 {
+                println!("{}[2J", 27 as char);
+            }
+            println!("Problem {}, seed {}, move {}, cmd {:?}:",
+                     self.problemId, self.seed, ch, cmd);
+            state = state.apply_sequence(&cmd);
             println!("{}", state.visualize());
             println!("Score: {}", state.score);
+            if state.game_over { break; }
         }
     }
 

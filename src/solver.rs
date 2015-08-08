@@ -99,11 +99,11 @@ impl MonteCarlo {
 }
 
 use std::num::Wrapping;
-struct Random(Wrapping<u32>);
+pub struct Random(Wrapping<u32>);
 
 impl Random {
-    fn new(seed: u32) -> Random { Random(Wrapping(seed)) }
-    fn random(&mut self) -> usize {
+    pub fn new(seed: u32) -> Random { Random(Wrapping(seed)) }
+    pub fn random(&mut self) -> usize {
         fn unwrap<T>(x: Wrapping<T>) -> T {
             let Wrapping(x) = x;
             x
@@ -113,8 +113,8 @@ impl Random {
         self.0 = multiplier*(self.0) + increment;
         unwrap(self.0) as usize
     }
-    fn commands(&mut self, s: &State, options: &[String], cmds: &[Vec<Command>])
-                -> (String, State) {
+    pub fn commands(&mut self, s: &State, options: &[String], cmds: &[Vec<Command>])
+                    -> (String, State) {
         if s.game_over {
             return ("".into(), s.clone())
         }
@@ -123,9 +123,11 @@ impl Random {
         let mut attempts = 0;
         loop {
             handled[i] = true;
-            let o = options[self.random() % options.len()].clone();
+            let o = options[i].clone();
             let ss = s.apply_sequence(&cmds[i]);
-            // println!("attempt {} \"{}\" -> {} <{}>", attempts, o, ss.score, ss.game_over);
+            if false {
+                println!("attempt {} \"{}\" -> {} <{}>", attempts, o, ss.score, ss.game_over);
+            }
             if !ss.game_over || ss.score > 0 {
                 return (o, ss)
             }
@@ -149,6 +151,9 @@ impl Random {
         let mut all_cmds: String = "".into();
         for _ in 0 .. max_cmds {
             let (more, snew) = self.commands(&s, options, cmds);
+            if snew.score < s.score {
+                return (all_cmds, s);
+            }
             all_cmds = all_cmds + &more;
             // if snew.score != s.score {
             //     println!("so far: {} -> {}", all_cmds, snew.score);
@@ -158,7 +163,7 @@ impl Random {
                 return (all_cmds, s)
             }
         }
-        return (all_cmds, s)
+        (all_cmds, s)
     }
 }
 
@@ -178,7 +183,7 @@ impl Solver for MonteCarlo {
         let mut best_cmds: String = "".into();
         let mut best_state = state.clone();
         for _ in 0..100000 {
-            let (cmds, new_s) = r.many_commands(&state, &moves, &seqs, 1000);
+            let (cmds, new_s) = r.many_commands(&state, &moves, &seqs, 10000);
             if new_s.score > best_state.score {
                 println!("Found better score with {} > {}",
                          new_s.score, best_state.score);
@@ -193,5 +198,62 @@ impl Solver for MonteCarlo {
             tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, best_state.seed, best_state.score)),
             solution: best_cmds,
         }, best_state.score)
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::super::*;
+
+    #[test]
+    fn test_random_many_commands() {
+        let states = input_to_states(&Input::from_json("problems/problem_0.json"));
+        let s = states[0].clone();
+
+        let moves: Vec<String> = vec!["p".into(),
+                                      "b".into(),
+                                      "a".into(),
+                                      "l".into(),
+                                      "d".into(),
+                                      "k".into()];
+        let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
+
+        for i in 0..30 {
+            let mut r = Random::new(i);
+            let (cmds, snew) = r.many_commands(&s, &moves, &seqs, 100);
+            let alt_snew = s.apply_sequence(&string_to_commands(&cmds));
+            println!("cmds {}", cmds);
+            assert_eq!(snew.score, alt_snew.score);
+        }
+    }
+
+    #[test]
+    fn test_random_commands() {
+        let states = input_to_states(&Input::from_json("problems/problem_0.json"));
+        let mut s = states[0].clone();
+        s.score = 5;
+        let s = s;
+
+        let moves: Vec<String> = vec!["p".into(),
+                                      "b".into(),
+                                      "a".into(),
+                                      "l".into(),
+                                      "d".into(),
+                                      "k".into()];
+        let mut seqs: Vec<Vec<Command>> = Vec::new();
+        for i in 0 .. moves.len() {
+            seqs.push(string_to_commands(&moves[i]));
+            println!("hello {} -> {:?}", moves[i], seqs[i]);
+        }
+        let seqs = seqs;
+
+        for i in 0..30 {
+            let mut r = Random::new(i);
+            let (cmds, snew) = r.commands(&s, &moves, &seqs);
+            let alt_snew = s.apply_sequence(&string_to_commands(&cmds));
+            println!("cmds {}", cmds);
+            assert_eq!(snew.score, alt_snew.score);
+            assert!(snew.score >= s.score);
+        }
     }
 }
