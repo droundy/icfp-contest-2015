@@ -13,7 +13,7 @@ pub struct Lattice {
 }
 
 impl Lattice {
-    fn new(x: i32, y:i32) -> Lattice {
+    pub fn new(x: i32, y:i32) -> Lattice {
         Lattice{x: x, y: y}
     }
     fn rotated(&self, c: Clock) -> Lattice {
@@ -344,13 +344,14 @@ mod tests {
         let mut states = input_to_states(Input::from_json("problems/problem_0.json"));
         let mut cmds: Vec<Command> = Vec::new();
         let mut s0 = states[0].clone();
+        println!("Starting position");
+        println!("{}", s0.visualize());
 
         while !s0.game_over {
             for &cmd in [Move(SE), Move(SW)].iter() {
                 if !s0.game_over {
                     s0 = s0.apply(cmd);
                     cmds.push(cmd);
-                    println!("{}[2J", 27 as char);
                     println!("Score: {}", s0.score);
                     println!("{}", s0.visualize());
                     thread::sleep_ms(100);
@@ -360,5 +361,6 @@ mod tests {
         println!("Solution: {}", commands_to_string(cmds.clone()));
         println!("score: {}", s0.score);
 
+        assert_eq!(s0.score, 5);
     }
 }

@@ -195,24 +195,41 @@ impl State {
   }
 
 pub fn input_to_states(input: Input) -> Vec<State> {
+    use simulate::Lattice;
+    let mut good_units = input.units.clone();
+    for i in 0 .. good_units.len() {
+        let mut u = good_units[i].clone();
+        // place the units in the proper location
+        let mut miny = u.members[0].y;
+        for m in u.members.iter() {
+            if m.y < miny {
+                miny = m.y;
+            }
+        }
+        let yoff = Lattice::new(0, -miny);
+        for j in 0 .. u.members.len() {
+            u.members[j] = Cell::from(Lattice::from(u.members[j]) - yoff);
+        }
+        u.pivot = Cell::from(Lattice::from(u.pivot) - yoff);
+        let mut minx = u.members[0].x;
+        let mut maxx = u.members[0].x;
+        for m in u.members.iter() {
+            if m.x < minx {
+                minx = m.x;
+            } else if m.x > maxx {
+                maxx = m.x;
+            }
+        }
+        let xoff = (minx + maxx)/2 - input.width/2;
+        u.pivot.x -= xoff;
+        for j in 0 .. u.members.len() {
+            u.members[j].x -= xoff;
+        }
+    }
     input.sourceSeeds.iter().map( |&s| {
         let mut seq: Vec<Unit> = Vec::with_capacity(input.sourceLength as usize);
         for i in get_source_order(s, input.sourceLength) {
-            let mut unit = input.units[((i as usize) % input.units.len()) as usize].clone();
-            let mut left = 1000;
-            let mut right = 0;
-            let mut top = 1000;
-            for member in unit.members.iter() {
-                if member.x < left { left = member.x }
-                if member.x > right { right = member.x }
-                if member.y < top { top = member.y }
-            }
-            if top > 0 { panic!("The top block has a y of {}, I don't know how to move it up to zero?!?!!??!?!?!", top); }
-            let shift: i32 = (input.width - right - left) / 2;
-            for i in (0..unit.members.len()) {
-                unit.members[i].x += shift;
-            }
-            seq.push(unit);
+            seq.push(good_units[((i as usize) % input.units.len()) as usize].clone());
         }
         let mut state = State::with_size(input.width, input.height);
         state.unit_sequence = seq;
