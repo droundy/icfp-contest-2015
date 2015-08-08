@@ -9,6 +9,8 @@ pub mod opts;
 pub mod in_out;
 pub mod solver;
 
+pub type Score = i32;
+
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, RustcDecodable, RustcEncodable)]
 pub struct Cell {
     pub x: i32,
@@ -91,7 +93,7 @@ pub struct State {
     pub visited: Vec<Unit>,
     pub unit_sequence: Vec<Unit>, // holds the actual sequence of units
     pub ls_old: i32,
-    pub score: i32,
+    pub score: Score,
     pub game_over: bool,
 }
 

@@ -190,6 +190,33 @@ pub fn score_commands(cmds: Vec<Command>, s0: &State) -> State {
     s
 }
 
+fn count_substrings(letters: &str, substr: &str) -> usize {
+    let sublen = substr.len();
+    if letters.len() < sublen {
+        return 0;
+    }
+    let max = letters.len() - sublen;
+    let mut count = 0;
+    for i in 0..max {
+        if &letters[i..i+sublen] == substr {
+            count += 1;
+        }
+    }
+    count
+}
+
+pub fn score_pop(letters: &str, pop: &[String]) -> Score {
+    let mut score = 0;
+    for p in 0 .. pop.len() {
+        let len_p = pop[p].len();
+        let reps_p = count_substrings(letters, &pop[p]);
+        let power_bonus_p = if reps_p > 0 { 300 } else { 0 };
+        let power_score_p = 2 * len_p * reps_p + power_bonus_p;
+        score += power_score_p as Score;
+    }
+    score
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

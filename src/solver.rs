@@ -3,8 +3,6 @@ use super::Direction::*;
 use super::Command::*;
 use super::opts::*;
 
-pub type Score = i32;
-
 pub trait Solver {
     fn solve(&self, &State, &Input, &DavarOptions) -> (Solution, Score);
 
@@ -173,12 +171,16 @@ impl Solver for MonteCarlo {
     fn solve(&self, state: &State, input: &Input, opt: &DavarOptions) -> (Solution, Score) {
         let mut r = Random::new(5);
 
-        let moves: Vec<String> = vec!["p".into(),
-                                      "b".into(),
-                                      "a".into(),
-                                      "l".into(),
-                                      "d".into(),
-                                      "k".into()];
+        let mut moves: Vec<String> = vec!["p".into(),
+                                          "b".into(),
+                                          "a".into(),
+                                          "l".into(),
+                                          "d".into(),
+                                          "k".into()];
+        for i in 0 .. opt.phrases_of_power.len() {
+            moves.push(opt.phrases_of_power[i].clone());
+        }
+        let moves = moves;
         let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
 
         let mut best_cmds: String = "".into();
@@ -188,8 +190,12 @@ impl Solver for MonteCarlo {
         let mut iters_per_time_check = 100;
         let mut time_per_iter = 1.0;
         let time_per_check_goal = 0.25;
-        for iters in 1..100000 {
-            let (cmds, new_s) = r.many_commands(&state, &moves, &seqs, 10000);
+        for iters in 1..1000000000 {
+            let (cmds, mut new_s) = r.many_commands(&state, &moves, &seqs, 10000);
+            let pop_score = simulate::score_pop(&cmds, &opt.phrases_of_power);
+            // println!("scores {} and {}", new_s.score, pop_score);
+            new_s.score += pop_score;
+            let new_s = new_s;
             if iters % iters_per_time_check == 0 {
                 current_time_left = opt.time_left();
                 if current_time_left < 3.0*time_per_check_goal {
