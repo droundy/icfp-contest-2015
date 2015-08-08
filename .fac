@@ -1,4 +1,4 @@
-| cargo build --release && cargo build && cargo doc && cargo test
+| cargo build --release && cargo build && cargo doc && RUST_BACKTRACE=1 cargo test
 c ~
 c .md
 c .tum
@@ -25,6 +25,8 @@ C target/debug/davar-
 C target/release/davar-
 C target/debug/solve_davar-
 C target/release/solve_davar-
+C target/debug/build
+C target/release/build
 C target/debug/deps
 C target/release/deps
 C ~/.cargo

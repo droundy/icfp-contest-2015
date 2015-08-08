@@ -53,6 +53,7 @@ impl State {
                 for i in 0..s.unit_sequence[0].members.len() {
                     let c = s.unit_sequence[0].members[i].moved(d);
                     s.unit_sequence[0].members[i] = c;
+                    // FIXME need to fix visited!
                     // if self.is_visited(c) {
                     //     s.game_over = true;
                     //     s.score = 0;
@@ -118,7 +119,7 @@ impl State {
         self.score += size + 100 * (1 + ls) * ls / 2;
 
         // need to make sure new unit starts in valid place, or just end game
-        if self.unit_sequence[0].members.iter().any(|&c| self.is_invalid(c)) {
+        if self.unit_sequence.len() > 0 && self.unit_sequence[0].members.iter().any(|&c| self.is_invalid(c)) {
             self.game_over = true;
         }
     }
@@ -145,6 +146,7 @@ mod tests {
                       pivot: Cell{ x: 5, y: 5}
         };
         s0.unit_sequence.push(u);
+        let s0 = s0; // mark s0 immutable now for clarity.
         let mut s = s0.apply(Command::Move(W));
         assert_eq!(false, s.game_over);
         assert_eq!(0, s.score);
