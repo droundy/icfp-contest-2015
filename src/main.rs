@@ -24,7 +24,7 @@ fn main() {
         }
     }
     else {
-        fnames = options.files; // See above comment
+        fnames = options.files.clone(); // See above comment
     }
     for e in fnames.iter() {
         let mut problemscore = 0;
@@ -32,7 +32,7 @@ fn main() {
         let states = input_to_states(&input);
         let num_states = states.len();
         for state in states {
-            let (solution, score) = solver.solve(&state, &input);
+            let (solution, score) = solver.solve(&state, &input, &options);
             if let Some(a) = options.animate {
                 solution.animate(a);
             }

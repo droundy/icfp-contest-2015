@@ -1,11 +1,12 @@
 use super::*;
 use super::Direction::*;
 use super::Command::*;
+use super::opts::*;
 
 pub type Score = i32;
 
 pub trait Solver {
-    fn solve(&self, &State, &Input) -> (Solution, Score);
+    fn solve(&self, &State, &Input, &DavarOptions) -> (Solution, Score);
 
     fn name(&self) -> String;
 }
@@ -33,7 +34,7 @@ impl AllDown {
 
 impl Solver for AllDown {
     fn name(&self) -> String { format!("alldown") }
-    fn solve(&self, state: &State, input: &Input) -> (Solution, Score) {
+    fn solve(&self, state: &State, input: &Input, _opts: &DavarOptions) -> (Solution, Score) {
         let mut cmds: Vec<Command> = Vec::new();
         let mut s = state.clone();
         // println!("Starting position");
@@ -72,7 +73,7 @@ impl SolverSE {
 
 impl Solver for SolverSE {
     fn name(&self) -> String { format!("se") }
-    fn solve(&self, state: &State, input: &Input) -> (Solution, Score) {
+    fn solve(&self, state: &State, input: &Input, _opts: &DavarOptions) -> (Solution, Score) {
         let mut cmds: Vec<Command> = Vec::new();
         let mut s = state.clone();
 
@@ -169,7 +170,7 @@ impl Random {
 
 impl Solver for MonteCarlo {
     fn name(&self) -> String { format!("mc") }
-    fn solve(&self, state: &State, input: &Input) -> (Solution, Score) {
+    fn solve(&self, state: &State, input: &Input, opt: &DavarOptions) -> (Solution, Score) {
         let mut r = Random::new(5);
 
         let moves: Vec<String> = vec!["p".into(),
@@ -182,8 +183,28 @@ impl Solver for MonteCarlo {
 
         let mut best_cmds: String = "".into();
         let mut best_state = state.clone();
-        for _ in 0..100000 {
+        let original_time_left = opt.time_left();
+        let mut current_time_left = original_time_left;
+        let mut iters_per_time_check = 100;
+        let mut time_per_iter = 1.0;
+        let time_per_check_goal = 0.25;
+        for iters in 1..100000 {
             let (cmds, new_s) = r.many_commands(&state, &moves, &seqs, 10000);
+            if iters % iters_per_time_check == 0 {
+                current_time_left = opt.time_left();
+                if current_time_left < 3.0*time_per_check_goal {
+                    return (Solution {
+                        problemId: input.id,
+                        seed: best_state.seed,
+                        tag: Some(format!("{}[{},{}] = {}", self.name(),
+                                          input.id, best_state.seed, best_state.score)),
+                        solution: best_cmds,
+                    }, best_state.score);
+
+                }
+                time_per_iter = (original_time_left - current_time_left) / iters as f64;
+                iters_per_time_check = (time_per_check_goal / time_per_iter) as usize
+            }
             if new_s.score > best_state.score {
                 println!("Found better score with {} > {}",
                          new_s.score, best_state.score);
@@ -268,7 +289,7 @@ impl BottomUp {
 impl Solver for BottomUp {
     fn name(&self) -> String { "bottomup".into() }
 
-    fn solve(&self, state: &State, input: &Input) -> (Solution, Score) {
+    fn solve(&self, state: &State, input: &Input, _opt: &DavarOptions) -> (Solution, Score) {
         unimplemented!()
     }
 }
