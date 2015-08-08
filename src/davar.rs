@@ -152,20 +152,17 @@ impl State {
               for x in 0..self.width as usize {
                 out_str.push(' ' as u8);
 
-                if self.is_filled(Cell::new(x as i32, y as i32)) {    // Is cell filled?
+                let here = Cell::new(x as i32, y as i32);
+                if self.is_filled(here) {    // Is cell filled?
                     out_str.push('X' as u8);
-                }
-                else if x==(pivot.x as usize) && y==(pivot.y as usize) {   // No, is cell a pivot?
+                } else if *pivot == here {   // No, is cell a pivot?
+                    if unit_array.contains(&here) {
+                        out_str.push('#' as u8);
+                    } else {
                         out_str.push('*' as u8);
                     }
-                else {
-                    let mut is_blank = true;
-                    for un in unit_array {   // No, is cell a non-pivot unit cell?
-                        if x==(un.x as usize) && y==(un.y as usize) {
-                            is_blank = false;
-                        }
-                    }
-                    if is_blank {
+                } else {
+                    if !unit_array.contains(&here) {
                         out_str.push('.' as u8);
                     }
                     else {
