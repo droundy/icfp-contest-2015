@@ -7,3 +7,5 @@ for remote in $remotes; do
     git pull $remote :
     echo ""
 done
+
+git push

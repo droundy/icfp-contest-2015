@@ -24,7 +24,7 @@ pub fn opts() -> DavarOptions {
     opts.optopt("", "solver", "name of solver algorithm", "ALGORITHM");
     opts.optopt("c", "", "number of cores", "NCORE");
     opts.optflag("h", "help", "print this help menu");
-    opts.optopt("f", "", "input filename", "FILENAME");
+    opts.optmulti("f", "", "input filename", "FILENAME");
     opts.optopt("t", "", "time limit", "SECONDS");
     opts.optopt("m", "", "memory limit", "MEGABYTES");
     opts.optmulti("p", "", "phrase of power", "PHRASE");
