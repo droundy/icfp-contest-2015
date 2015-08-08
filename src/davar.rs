@@ -243,7 +243,7 @@ pub fn input_to_states(input: &Input) -> Vec<State> {
         state.unit_sequence = seq;
         state.seed = s;
         for &cell in input.filled.iter() {
-            state.filled(cell);
+            *state.filled(cell) = true;
         }
         state
     }).collect()

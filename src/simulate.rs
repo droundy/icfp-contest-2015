@@ -428,4 +428,13 @@ mod tests {
 
         assert_eq!(s0.score, 61);
     }
+
+    #[test]
+    fn view_boards() {
+        for i in (0..24) {
+            let states = input_to_states(&Input::from_json(format!("problems/problem_{}.json", i)));
+            println!("Problem {}:", i);
+            println!("{}", states[0].visualize());
+        }
+    }
 }
