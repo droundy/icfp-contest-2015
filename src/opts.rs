@@ -1,4 +1,5 @@
 extern crate getopts;
+extern crate time;
 
 use std::env;
 use std::process;
@@ -8,11 +9,18 @@ pub struct DavarOptions {
     pub ncores: usize,
     pub submit: bool,
     pub files: Vec<String>,
-    pub time_limit: Option<usize>,
+    pub time_limit: f64,
     pub memory_limit: Option<usize>,
     pub phrases_of_power: Vec<String>,
     pub solver: String,
     pub animate: Option<u32>,
+    pub starting_time: f64,
+}
+
+impl DavarOptions {
+    pub fn time_left(&self) -> f64 {
+        self.time_limit as f64 - time::precise_time_s() + self.starting_time
+    }
 }
 
 pub fn opts() -> DavarOptions {
@@ -42,17 +50,18 @@ pub fn opts() -> DavarOptions {
         ncores: 1,
         submit: matches.opt_present("submit"),
         files: matches.opt_strs("f"),
-        time_limit: None,
+        time_limit: 60.0*60.0*24.0, // one day time limit!
         memory_limit: None,
         phrases_of_power: matches.opt_strs("p"),
         solver: "alldone".into(),
         animate: None,
+        starting_time: time::precise_time_s(),
     };
     if let Some(nc) = matches.opt_str("c") {
         davar_options.ncores = nc.parse().unwrap();
     }
     if let Some(t) = matches.opt_str("t") {
-        davar_options.time_limit = Some(t.parse().unwrap());
+        davar_options.time_limit = t.parse().unwrap();
     }
     if let Some(m) = matches.opt_str("m") {
         davar_options.memory_limit = Some(m.parse().unwrap());
