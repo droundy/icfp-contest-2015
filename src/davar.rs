@@ -13,6 +13,12 @@ pub struct Cell {
     pub y: i32,
 }
 
+impl Cell {
+  fn new(x: i32, y:i32) -> Cell {
+    Cell{x: x, y: y}
+  }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, Hash, RustcDecodable, RustcEncodable)]
 pub struct Unit {
     pub members: Vec<Cell>,
@@ -123,15 +129,35 @@ impl State {
     }
 
     fn visualize(&self) -> String {
+
         // print stuff here, but eventually return a string.
         let mut chars: Vec<Vec<char>> = vec![vec![]; self.width as usize];
         for i in 0 .. self.width as usize {
-            chars[i] = vec![' '; self.height as usize];
+            chars[i] = vec!['O'; self.height as usize];
         }
-        chars[1][1] = '#';
-        unimplemented!();
+
+        let mut out_str = Vec::with_capacity( (2*self.width + 2) as usize * self.height as usize);
+        for y in 0..self.height as usize {
+          if y%2==1 { out_str.push(' ' as u8); }
+
+          for x in 0..self.width as usize {
+            out_str.push(' ' as u8);
+            if self.is_filled(Cell::new(x as i32, y as i32) ) {
+              out_str.push('O' as u8);
+            }
+            else {
+              out_str.push(' ' as u8);
+            }
+          }
+
+          if y%2==0 { out_str.push(' ' as u8); }
+          out_str.push('\n' as u8);
+        }
+
+        String::from_utf8(out_str).unwrap()
     }
-}
+
+  }
 
 pub fn input_to_states(input: Input) -> Vec<State> {
     input.sourceSeeds.iter().map( |&s| {
@@ -225,7 +251,7 @@ mod tests {
     #[test]
     fn test_visualize() {
         let st0 = State::new();
-        assert_eq!("", st0.visualize());
+        println!("out_str:\n{}\n", st0.visualize());
     }
 
 	  #[test]
