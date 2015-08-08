@@ -10,13 +10,14 @@ use std::process;
 fn main() {
     let options = opts::opts();
 
-    println!("all down!");
+    let mut totalscore = 0;
     for i in 0..24 {
+        let mut problemscore = 0;
         let mut solutions = Vec::new();
         let fname = format!("problems/problem_{}.json", i);
-        println!("all down {}", fname);
-        let input = Input::from_json("problems/problem_6.json");
+        let input = Input::from_json(fname);
         let states = input_to_states(&input);
+        let num_states = states.len();
         for state in states {
             let mut cmds: Vec<Command> = Vec::new();
             let mut s = state.clone();
@@ -34,8 +35,10 @@ fn main() {
                     }
                 }
             }
-            println!("Solution[{},{}]: {}", i, s.seed, commands_to_string(cmds.clone()));
-            println!("score: {}", s.score);
+            // println!("Solution[{},{}]: {}", i, s.seed, commands_to_string(cmds.clone()));
+            // println!("score[{},{}]: {}", i, s.seed, s.score);
+            totalscore += s.score;
+            problemscore += s.score;
 
             solutions.push(Solution {
                 problemId: input.id,
@@ -47,9 +50,13 @@ fn main() {
         if options.submit {
             println!("I am submitting solutions for {}.", i);
             in_out::submit_solutions(&solutions);
-        } else {
-            println!("Not submitting solutions.");
         }
+        println!("problem score[{}]: {} ({} and {})", i, problemscore as f64 / num_states as f64,
+                 problemscore, num_states);
     }
+    println!("total score: {}", totalscore);
 
+    if !options.submit {
+        println!("Not submitting solutions.");
+    }
 }
