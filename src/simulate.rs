@@ -102,7 +102,7 @@ impl State {
         }
         self.is_filled(c)
     }
-    fn apply(&self, c: Command) -> Self {
+    pub fn apply(&self, c: Command) -> Self {
         let mut s = self.clone();
         if s.game_over {
             return s;
@@ -382,7 +382,7 @@ mod tests {
         use std::thread;
         use Command::Move;
 
-        let mut states = input_to_states(Input::from_json("problems/problem_0.json"));
+        let mut states = input_to_states(&Input::from_json("problems/problem_0.json"));
         let mut cmds: Vec<Command> = Vec::new();
         let mut s0 = states[0].clone();
         println!("Starting position");
@@ -402,7 +402,7 @@ mod tests {
         println!("Solution: {}", commands_to_string(cmds.clone()));
         println!("score: {}", s0.score);
 
-        //assert_eq!(s0.score, 5);
+        assert_eq!(s0.score, 13); // This has been confirmed on the leaderboard!
     }
 
     #[test]
@@ -410,7 +410,7 @@ mod tests {
         use std::thread;
         use Command::Move;
 
-        let states = input_to_states(Input::from_json("problems/problem_6.json"));
+        let states = input_to_states(&Input::from_json("problems/problem_6.json"));
         let mut s0 = states[0].clone();
         println!("Starting position");
         println!("{}", s0.visualize());

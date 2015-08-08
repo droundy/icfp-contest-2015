@@ -83,6 +83,7 @@ pub struct Solution {
 
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub struct State {
+    pub seed: i32,
     pub width: i32,
     pub height: i32,
     pub filled_array: Vec<bool>,
@@ -94,21 +95,9 @@ pub struct State {
 }
 
 impl State {
-    fn new() -> State {
-        State {
-            width: 10,
-            height: 10,
-            filled_array: vec![false; 10*10],
-            visited: Vec::new(),
-            unit_sequence: Vec::new(),
-            ls_old: 0,
-            score: 0,
-            game_over: false,
-        }
-    }
-
     fn with_size(width: i32, height: i32) -> State {
         State {
+            seed: 0,
             width: width,
             height: height,
             filled_array: vec![false; (width*height) as usize],
@@ -118,6 +107,9 @@ impl State {
             score: 0,
             game_over: false,
         }
+    }
+    fn new() -> State {
+        State::with_size(10,10)
     }
     fn filled(&mut self, c: Cell) -> &mut bool {
         &mut self.filled_array[c.x as usize + (c.y as usize)*(self.width as usize)]
@@ -129,7 +121,7 @@ impl State {
         self.filled_array[c.x as usize + (c.y as usize)*(self.width as usize)]
     }
 
-    fn visualize(&self) -> String {
+    pub fn visualize(&self) -> String {
 
         // print stuff here, but eventually return a string.
         let mut chars: Vec<Vec<char>> = vec![vec![]; self.width as usize];
@@ -202,7 +194,7 @@ impl State {
 
   }
 
-pub fn input_to_states(input: Input) -> Vec<State> {
+pub fn input_to_states(input: &Input) -> Vec<State> {
     use simulate::Lattice;
     let mut good_units = input.units.clone();
     for i in 0 .. good_units.len() {
@@ -236,7 +228,6 @@ pub fn input_to_states(input: Input) -> Vec<State> {
         } else {
             (widl - widr)/2
         };
-        println!("xoff is {} from widl {} and widr {}", xoff, widl, widr);
         u.pivot.x -= xoff;
         for j in 0 .. u.members.len() {
             u.members[j].x -= xoff;
@@ -249,6 +240,7 @@ pub fn input_to_states(input: Input) -> Vec<State> {
         }
         let mut state = State::with_size(input.width, input.height);
         state.unit_sequence = seq;
+        state.seed = s;
         for &cell in input.filled.iter() {
             state.filled(cell);
         }
@@ -349,7 +341,7 @@ mod tests {
 
 	  #[test]
     fn centering_state() {
-        let s = input_to_states(Input::from_json("problems/problem_0.json"))[0].clone();
+        let s = input_to_states(&Input::from_json("problems/problem_0.json"))[0].clone();
         let mut minx = 500;
         let mut maxx = -500;
         let mut miny = 500;
