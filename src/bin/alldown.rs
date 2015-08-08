@@ -40,12 +40,12 @@ fn main() {
             solutions.push(Solution {
                 problemId: input.id,
                 seed: s.seed,
-                tag: Some(format!("alldown[{}]", i)),
+                tag: Some(format!("alldown[{},{}] = {}", i, s.seed, s.score)),
                 solution: commands_to_string(cmds.clone()),
             });
         }
         if options.submit {
-            println!("I am submitting solutions.");
+            println!("I am submitting solutions for {}.", i);
             in_out::submit_solutions(&solutions);
         } else {
             println!("Not submitting solutions.");
