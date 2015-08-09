@@ -454,8 +454,8 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
     }
 }
 
-pub fn find_paths_dfs(s: &State, goal_unit: Unit, pop: &[String]) -> Option<(Vec<String>, State)> {
-    let mut out_cmd_str: Vec<String> = Vec::new();
+pub fn find_paths_dfs(s: &State, goal_unit: Unit, pop: &[String]) -> Option<(String, State)> {
+    let mut out_cmd_str: String = "".into();
 
     let mut state = s.clone();
 
