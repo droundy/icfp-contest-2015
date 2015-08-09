@@ -327,14 +327,6 @@ impl BottomUp {
     fn new() -> Self { BottomUp }
 }
 
-// impl Solver for BottomUp {
-//     fn name(&self) -> String { "bottomup".into() }
-
-//     fn solve(&self, state: &State, input: &Input, _opt: &DavarOptions) -> (Solution, Score) {
-//         unimplemented!()
-//     }
-// }
-
 /// Taxicab distance function
 fn distance(a: Cell, b: Cell) -> i32 {
     let v: Lattice = Lattice::from(b) - Lattice::from(a);
@@ -360,6 +352,36 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
                 }
                 unit.rotate(Clock::Wise);
             }
+        }
+    }
+    // We should have all valid positions. Now let's trim them; to start, we only want
+    // ones that have either filled cells or floor below
+    let mut i: usize = 0;
+    loop {
+        // done this way because length may change
+        if i >= valid_positions.len() {
+            break
+        }
+        #[inline]
+        fn has_lower_neighbor(state: &State, c: Cell) -> bool {
+            state.is_filled(Cell{x: c.x, y: c.y + 1}) ||
+                if c.y % 2 == 0 {
+                    state.is_filled(Cell{x: c.x - 1, y: c.y + 1})
+                } else {
+                    state.is_filled(Cell{x: c.x + 1, y: c.y + 1})
+                }
+        }
+        let discard: bool = valid_positions[i].members.iter().any(|&c| {
+            // fixme: make sure this isn't an off by one error
+            c.y == state.height - 1 || has_lower_neighbor(state, c)
+        });
+        if discard {
+            // O(1) removal that replaces with last
+            // so don't increment i
+            valid_positions.swap_remove(i);
+        }
+        else {
+            i += 1;
         }
     }
     valid_positions
