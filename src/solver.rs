@@ -442,6 +442,7 @@ fn test_distance() {
 }
 
 fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
+
     let unit = &state.unit_sequence[0];
 
     let min = unit.members.iter().map(|&m| distance(unit.pivot, m)).min().unwrap();
@@ -449,11 +450,11 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
     let mut valid_positions: Vec<Unit> = Vec::new();
 
     for y in (-min..state.height + min).rev() {
-        for x in (-min..state.width + min).rev() {
-            let delta = Lattice::from(Cell::new(x, y));
-            let pivot = Cell::from(Lattice::from(unit.pivot) + delta);
-            let members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
-            let mut unit = Unit{pivot: pivot, members: members.collect()};
+        for x in (-min..state.width + min - 1) {
+            let final_pivot = Cell::new(x, y);
+            let delta = Lattice::from(final_pivot) - Lattice::from(unit.pivot);
+            let final_members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
+            let mut unit = Unit{pivot: final_pivot, members: final_members.collect()};
             for _ in (0..6) {
                 if !state.is_unit_invalid(&unit) {
                     valid_positions.push(unit.clone());
