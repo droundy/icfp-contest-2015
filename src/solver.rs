@@ -410,28 +410,25 @@ impl Random {
 
 fn get_score(s: &State, goal: &Unit, move_string: &String) -> i32 {         // Return how much closer the move gets you
     use std::i32;
-    println!("finding distance for {}", move_string);
+    //println!("finding distance for {}", move_string);
     let mut s0 = s.clone();
     let start_dist = distance(s0.unit_sequence[0].pivot, goal.pivot);
-    println!("Before move looks like: \n{}", s0.visualize());
+    //println!("Before move looks like: \n{}", s0.visualize());
 
     for cmd in string_to_commands(&move_string[..]) {
         s0 = s0.apply(cmd);
-        println!("After a move: \n{}", s0.visualize());
+        //println!("After a move: \n{}", s0.visualize());
         if s0.game_over {
+            //println!("Blah. That move caused an invalid state.");
             return i32::MIN         // Game-ending move. Return lowest weight possible.
         }
     }
 
-    println!("for {} found score to be: {}\n\n\n\n\n", move_string, start_dist - distance(s0.unit_sequence[0].pivot, goal.pivot));
+    //println!("for {} found score to be: {}", move_string, start_dist - distance(s0.unit_sequence[0].pivot, goal.pivot));
     return start_dist - distance(s0.unit_sequence[0].pivot, goal.pivot)
 }
 
-/*fn get_score(s: &State, goal: &Unit, move_string: &String) -> i32 {
-    move_string.len() as i32
-}*/
-
-fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]) -> Vec<String> {
+fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]) -> Option<Vec<String>> {
     let mut recommended_moves: Vec<String> = Vec::new();        // Order moves powerwords first by distance-minimizing
 
     let mut pop_cpy: Vec<String> = pop.clone().into();  // Order phrases by distance-minimizing
@@ -450,31 +447,30 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
         }
     }
     println!("recommended moves: {:?}", recommended_moves);
-    recommended_moves
+    if recommended_moves.len() > 0 {
+        Some(recommended_moves)
+    } else {
+        None
+    }
 }
 
-pub fn find_paths_dfs(s: &State, goal_unit: Unit, pop: &[String]) -> Vec<String> {
+pub fn find_paths_dfs(s: &State, goal_unit: Unit, pop: &[String]) -> Option<(Vec<String>, State)> {
     let mut out_cmd_str: Vec<String> = Vec::new();
 
     let mut state = s.clone();
-    let mut my_unit = &state.unit_sequence[0];
 
-    let mut moves: Vec<String> = Vec::new();
-    moves.push("p".into()); // W
-    moves.push("b".into()); // E
-    moves.push("a".into()); // SW
-    moves.push("l".into()); // SE
-    moves.push("d".into()); // CW
-    moves.push("k".into()); // CCW
+    let mut moves: Vec<String> = vec!["p".into(), "b".into(), "a".into(), "l".into(), "d".into(), "k".into()];
 
-    //println!("{}", state.visualize());
-    //println!("unit x: {} unit y: {}", my_unit.pivot.x, my_unit.pivot.y);
-    //println!("goal x: {} goal y: {}", goal_unit.pivot.x, goal_unit.pivot.y);
-    //println!("distance: {}", distance(my_unit.pivot, goal_unit.pivot));
+    let mut dfs_stack: Vec<(State, Vec<String>)> = Vec::new();
 
-    get_move_ranking_dfs(s, &goal_unit, pop, &moves[..]);
+    while let Some(next_moves) = get_move_ranking_dfs(&state, &goal_unit, pop, &moves[..]) {
+        for cmd in string_to_commands(&next_moves[0][..]) {
+            state = state.apply(cmd);
+        }
+        dfs_stack.push( (state.clone(), next_moves) );
+    }
 
-    out_cmd_str
+    Some((out_cmd_str, state))
 }
 
 // pub fn find_path(s: &State, goal: &Unit) -> Option(&[Commands]) {
