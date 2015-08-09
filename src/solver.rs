@@ -3,6 +3,7 @@ use super::Direction::*;
 use super::Command::*;
 use super::simulate::Lattice;
 use super::opts::*;
+use std::i32;
 
 extern crate time;
 
@@ -327,10 +328,46 @@ impl BottomUp {
     fn new() -> Self { BottomUp }
 }
 
-/// Taxicab distance function
+/// Returns distance in number of moves
+/// this is a somewhat bizarre distance formula that tells us the number of moves b is
+/// from a
+/// NOTE: it is asymmetric because we can never go up. Moves up will be expressed as
+/// i32::MAX to discourage them by any weighting
+
+// 1 SE = 1
+// 1 E = 1
+// 1 SE - 1 E = 1 SW = 1
+// - 1 SE = MAX
+// -1 SE + 1 E = -1 SW = MAX
 fn distance(a: Cell, b: Cell) -> i32 {
-    let v: Lattice = Lattice::from(b) - Lattice::from(a);
-    v.x.abs() + v.y.abs()
+    let mut v: Lattice = Lattice::from(b) - Lattice::from(a);
+    if v.y < 0 { return i32::MAX }
+    let mut d = 0;
+    while v.x < 0  && v.y >= 0 {
+        d += 1;
+        v.x += 1;
+        v.y -= 1;
+    }
+    d + v.x.abs() + v.y
+}
+
+#[test]
+fn test_distance() {
+    // tuples in form (a.x, a.y, b.x, b.y, distance)
+    let tests = &[(1, 2, 0, 5, 3),
+                  (1, 7, 1, 4, i32::MAX),
+                  (2, 5, 3, 6, 1),
+                  (2, 5, 2, 6, 1),
+                  (3, 7, 3, 7, 0),
+                  (2, 5, 2, 4, i32::MAX),
+                  (2, 5, 3, 4, i32::MAX),
+                  (1, 2, 0, 4, 2),
+                  (3, 2, 4, 4, 2),
+                  ];
+    for &(ax, ay, bx, by, d) in tests {
+        println!("a: ({}, {}), b: ({}, {}), d: {}", ax, ay, bx, by, d);
+        assert_eq!(distance(Cell{x:ax, y:ay}, Cell{x:bx, y:by}), d);
+    }
 }
 
 fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
