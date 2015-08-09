@@ -5,6 +5,7 @@ use std::env;
 use std::process;
 use std::vec::Vec;
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct DavarOptions {
     pub ncores: usize,
     pub submit: bool,
@@ -18,6 +19,7 @@ pub struct DavarOptions {
     pub seed: Option<i32>,
     pub solution: Option<String>,
 }
+
 
 impl DavarOptions {
     pub fn time_left(&self) -> f64 {

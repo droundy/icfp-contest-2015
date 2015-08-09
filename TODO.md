@@ -1,4 +1,3 @@
-
 - Implement game AI
 
     * Tetris-solution

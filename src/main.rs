@@ -6,14 +6,12 @@ use davar::*;
 // use davar::Command::*;
 // use rustc_serialize::json;
 // use std::process;
-use davar::solver::{Solver};
 use std::thread;
 
 #[allow(dead_code)]
 fn main() {
     let options = opts::opts();
     let mut totalscore = 0;
-    let mut solutions = Vec::new();
     let solver = solver::name_to_solver(&options.solver);
     let mut fnames: Vec<String> = Vec::new();
 
@@ -26,29 +24,31 @@ fn main() {
     else {
         fnames = options.files.clone(); // See above comment
     }
+    let mut joinhandles: Vec<thread::JoinHandle<(Solution, Score)>> = Vec::new();
     for e in fnames.iter() {
-        let mut problemscore = 0;
         let input = Input::from_json(e);
         let states = input_to_states(&input);
-        let num_states = states.len();
         for state in states {
-            let (solution, score) = solver.solve(&state, &input, &options);
-
-            if let Some(a) = options.animate {
-                solution.animate(a);
-            }
-
-            println!("  cmd: {}", solution.solution);
-            solutions.push(solution);
-
-            totalscore += score;
-            problemscore += score;
+            let options = options.clone();
+            let input = input.clone();
+            joinhandles.push(thread::spawn(move || { solver.solve(&state, &input, &options) }));
         }
-        println!("{} score[{}]: {} ({} and {})", solver.name(),
-                 e, problemscore as f64 / num_states as f64,
-                 problemscore, num_states);
-        if let Some(_) = options.animate {
-            thread::sleep_ms(1000);
+    }
+    let mut solutions: Vec<Solution> = Vec::new();
+    for jh in joinhandles {
+        match jh.join() {
+            Err(e) => {
+                println!("Error! {:?}", e);
+            }
+            Ok((solution, score)) => {
+                if let Some(a) = options.animate {
+                    solution.animate(a);
+                }
+                // println!("  cmd: {}", solution.solution);
+
+                solutions.push(solution);
+                totalscore += score;
+            }
         }
     }
     if options.submit {
