@@ -124,6 +124,7 @@ impl State {
     pub fn apply(&self, c: Command) -> Self {
         let mut s = self.clone();
         if s.game_over {
+            s.score = 0;
             return s;
         }
         if s.unit_sequence.len() == 0 {
