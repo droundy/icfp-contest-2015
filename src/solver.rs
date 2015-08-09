@@ -79,10 +79,10 @@ impl Solver {
 
                 let mut moves: Vec<String> = vec!["p".into(),
                                                   "b".into(),
-                                                  "a".into(),
-                                                  "l".into(),
                                                   "d".into(),
-                                                  "k".into()];
+                                                  "k".into(),
+                                                  "a".into(),
+                                                  "l".into()];
                 for i in 0 .. opt.phrases_of_power.len() {
                     moves.push(opt.phrases_of_power[i].clone());
                 }
@@ -178,10 +178,10 @@ impl Solver {
                 let mut r = Random::new(3);
                 let mut moves: Vec<String> = vec!["p".into(),
                                                   "b".into(),
-                                                  "a".into(),
-                                                  "l".into(),
                                                   "d".into(),
-                                                  "k".into()];
+                                                  "k".into(),
+                                                  "a".into(),
+                                                  "l".into()];
                 for i in 0 .. opt.phrases_of_power.len() {
                     moves.push(opt.phrases_of_power[i].clone());
                 }
@@ -313,7 +313,6 @@ impl Random {
     }
     fn find_level(&mut self, s: &State, target: i32, options: &[String], cmds: &[Vec<Command>])
                   -> Option<(String, State)> {
-        println!("calling find_level");
         let mut s = s.clone();
         let mut all_cmds = String::new();
         let num_units = s.unit_sequence.len();
@@ -330,16 +329,15 @@ impl Random {
         }
     }
     fn find_path(&mut self, input_s: &State, target: &Unit, options: &[String], cmds: &[Vec<Command>])
-                     -> Option<(String, State)> {
-        println!("calling find_path");
+                 -> Option<(String, State)> {
         let mut s = input_s.clone();
         let mut all_cmds = String::new();
         let mut attempts = 0;
         let num_units = s.unit_sequence.len();
 
         let mut level = s.unit_sequence[0].pivot.y + 1;
-        println!("starting at level {} with target level {}",
-                 level, target.pivot.y);
+        // println!("starting at level {} with target level {}",
+        //          level, target.pivot.y);
         while level <= target.pivot.y {
             attempts += 1;
             match self.find_level(&s, level, options, cmds) {
@@ -352,11 +350,13 @@ impl Random {
                 }
             }
             if attempts > 10*s.width {
+                println!("NO PATH to level {} for {},{}!",
+                         level, target.pivot.x, target.pivot.y);
                 return None;
             }
         }
         if s.unit_sequence[0].pivot.y == target.pivot.y {
-            for _ in 0..10*s.width {
+            for _ in 0..30*s.width {
                 let (more, snew) = self.commands(&s, &options[0..4], &cmds[0..4]);
                 if snew.unit_sequence.len() != num_units {
                     continue;
@@ -364,17 +364,24 @@ impl Random {
                 all_cmds = all_cmds + &more;
                 s = snew;
                 if s.unit_sequence[0] == *target {
-                    println!("Found a path to target!");
+                    println!("Found a path to target at {}, {}!",
+                             target.pivot.x, target.pivot.y);
                     for _ in 0..6 {
-                        let (more, snew) = self.commands(&s, &options[0..6], &cmds[0..6]);
+                        let (more, snew) = self.commands(&s, &options[4..6], &cmds[4..6]);
                         if snew.unit_sequence.len() != num_units {
-                            println!("Found the fnisher");
+                            println!("Found the finisher");
                             return Some((all_cmds + &more, snew));
                         }
                     }
                 }
             }
+        } else {
+            println!("NO PATH to target: got wrong level {} for {}, {}!",
+                     s.unit_sequence[0].pivot.y,
+                     target.pivot.x, target.pivot.y);
         }
+        println!("NO PATH to target at {}, {}!",
+                 target.pivot.x, target.pivot.y);
         None
     }
 }
@@ -506,10 +513,10 @@ mod tests {
 
         let moves: Vec<String> = vec!["p".into(),
                                       "b".into(),
-                                      "a".into(),
-                                      "l".into(),
                                       "d".into(),
-                                      "k".into()];
+                                      "k".into(),
+                                      "a".into(),
+                                      "l".into()];
         let mut seqs: Vec<Vec<Command>> = Vec::new();
         for i in 0 .. moves.len() {
             seqs.push(string_to_commands(&moves[i]));
