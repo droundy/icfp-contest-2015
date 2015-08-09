@@ -19,6 +19,7 @@ pub struct DavarOptions {
     pub starting_time: f64,
     pub seed: Option<i32>,
     pub solution: Option<String>,
+    pub tag: Option<String>,
 }
 
 
@@ -45,6 +46,7 @@ pub fn opts() -> DavarOptions {
     opts.optopt("", "animate", "MILISECONDS", "display animation of solution");
     opts.optopt("", "seed", "INT", "specify if you only want to run for a single seed");
     opts.optopt("", "solution", "STRING", "Only used with \"supplied\" solver. Instead of running an algorithm, will just solve with this solution.");
+    opts.optopt("", "tag", "STRING", "Override default tag with this.");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m }
         Err(f) => { panic!(f.to_string()) }
@@ -67,6 +69,7 @@ pub fn opts() -> DavarOptions {
         starting_time: time::precise_time_s(),
         seed: None,
         solution: None,
+        tag: None,
     };
     if let Some(nc) = matches.opt_str("c") {
         davar_options.ncores = nc.parse().unwrap();
@@ -88,6 +91,7 @@ pub fn opts() -> DavarOptions {
     }
 
     davar_options.solution = matches.opt_str("solution");
+    davar_options.tag = matches.opt_str("solution");
 
     davar_options
 }

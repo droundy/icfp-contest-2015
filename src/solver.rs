@@ -46,7 +46,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: commands_to_string(cmds.clone()),
                 }, s.score)
             },
@@ -62,7 +66,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: commands_to_string(cmds.clone()),
                 }, s.score)
             },
@@ -118,8 +126,11 @@ impl Solver {
                             return (Solution {
                                 problemId: input.id,
                                 seed: best_state.seed,
-                                tag: Some(format!("{}[{},{}] = {}", self.name(),
-                                                  input.id, best_state.seed, best_state.score)),
+                                tag: match opt.tag {
+                                    None => Some(format!("{}[{},{}] = {}", self.name(),
+                                                         input.id, best_state.seed, best_state.score)),
+                                    ref tag => tag.clone(),
+                                },
                                 solution: best_cmds,
                             }, best_state.score);
                         }
@@ -131,7 +142,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: best_state.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, best_state.seed, best_state.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, best_state.seed, best_state.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: best_cmds,
                 }, best_state.score)
             },
@@ -149,7 +164,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: cmds.into_iter().collect(),
                 }, s.score)
             },
@@ -173,7 +192,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: solution,
                 }, s.score)
             },
@@ -384,8 +407,8 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
 
     let mut valid_positions: Vec<Unit> = Vec::new();
 
-    for x in (-min..state.width + min) {
-        for y in (-min..state.height + min) {
+    for x in (-min..state.width + min).rev() {
+        for y in (-min..state.height + min).rev() {
             let delta = Lattice::new(x, y);
             let pivot = Cell::from(Lattice::from(unit.pivot) + delta);
             let members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
