@@ -455,11 +455,11 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
                     state.is_filled(Cell{x: c.x + 1, y: c.y + 1})
                 }
         }
-        let discard: bool = valid_positions[i].members.iter().any(|&c| {
+        let keep: bool = valid_positions[i].members.iter().any(|&c| {
             // fixme: make sure this isn't an off by one error
-            c.y < state.height - 1 || has_lower_neighbor(state, c)
+            c.y == state.height - 1 || has_lower_neighbor(state, c)
         });
-        if discard {
+        if !keep {
             // O(1) removal that replaces with last
             // so don't increment i
             valid_positions.swap_remove(i);
