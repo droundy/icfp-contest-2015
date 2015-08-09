@@ -460,9 +460,8 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
             c.y == state.height - 1 || has_lower_neighbor(state, c)
         });
         if !keep {
-            // O(1) removal that replaces with last
-            // so don't increment i
-            valid_positions.swap_remove(i);
+            valid_positions.remove(i);
+            // don't increment i here because we're removing
         }
         else {
             i += 1;
