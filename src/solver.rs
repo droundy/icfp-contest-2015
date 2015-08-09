@@ -3,7 +3,6 @@ use super::Direction::*;
 use super::Command::*;
 use super::simulate::Lattice;
 use super::opts::*;
-use std::i32;
 
 extern crate time;
 
@@ -47,7 +46,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: commands_to_string(cmds.clone()),
                 }, s.score)
             },
@@ -63,7 +66,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: commands_to_string(cmds.clone()),
                 }, s.score)
             },
@@ -119,8 +126,11 @@ impl Solver {
                             return (Solution {
                                 problemId: input.id,
                                 seed: best_state.seed,
-                                tag: Some(format!("{}[{},{}] = {}", self.name(),
-                                                  input.id, best_state.seed, best_state.score)),
+                                tag: match opt.tag {
+                                    None => Some(format!("{}[{},{}] = {}", self.name(),
+                                                         input.id, best_state.seed, best_state.score)),
+                                    ref tag => tag.clone(),
+                                },
                                 solution: best_cmds,
                             }, best_state.score);
                         }
@@ -132,7 +142,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: best_state.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, best_state.seed, best_state.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, best_state.seed, best_state.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: best_cmds,
                 }, best_state.score)
             },
@@ -150,7 +164,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: cmds.into_iter().collect(),
                 }, s.score)
             },
@@ -187,7 +205,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: solution,
                 }, s.score)
             },
@@ -357,48 +379,40 @@ impl Random {
     }
 }
 
-pub fn find_path(s: &State, goal: &Unit) -> Option<(String, Score)> {
-    unimplemented!();
-}
-
-/// Returns distance in number of moves
-/// this is a somewhat bizarre distance formula that tells us the number of moves b is
-/// from a
-/// NOTE: it is asymmetric because we can never go up. Moves up will be expressed as
-/// i32::MAX to discourage them by any weighting
+/// Taxicab-like distance formula for our lattice
 
 // 1 SE = 1
 // 1 E = 1
 // 1 SE - 1 E = 1 SW = 1
-// - 1 SE = MAX
-// -1 SE + 1 E = -1 SW = MAX
+// - 1 SE = 1
+// -1 SE + 1 E = -1 SW = 1
 fn distance(a: Cell, b: Cell) -> i32 {
-    let mut v: Lattice = Lattice::from(b) - Lattice::from(a);
-    if v.y < 0 { return i32::MAX }
-    let mut d = 0;
-    while v.x < 0  && v.y >= 0 {
-        d += 1;
-        v.x += 1;
-        v.y -= 1;
+    let v: Lattice = Lattice::from(b) - Lattice::from(a);
+    if v.x.is_positive() == v.y.is_positive() {
+        v.x.abs() + v.y.abs()
+    } else {
+        ::std::cmp::max(v.x.abs(), v.y.abs())
     }
-    d + v.x.abs() + v.y
 }
 
 #[test]
 fn test_distance() {
     // tuples in form (a.x, a.y, b.x, b.y, distance)
     let tests = &[(1, 2, 0, 5, 3),
-                  (1, 7, 1, 4, i32::MAX),
+                  (1, 7, 1, 4, 3),
                   (2, 5, 3, 6, 1),
                   (2, 5, 2, 6, 1),
                   (3, 7, 3, 7, 0),
-                  (2, 5, 2, 4, i32::MAX),
-                  (2, 5, 3, 4, i32::MAX),
+                  (2, 5, 2, 4, 1),
+                  (2, 5, 3, 4, 1),
                   (1, 2, 0, 4, 2),
                   (3, 2, 4, 4, 2),
                   ];
     for &(ax, ay, bx, by, d) in tests {
         println!("a: ({}, {}), b: ({}, {}), d: {}", ax, ay, bx, by, d);
+        println!("Ensuring symmetry.");
+        assert_eq!(distance(Cell{x:ax, y:ay}, Cell{x:bx, y:by}), distance(Cell{x:bx, y:by}, Cell{x:ax, y:ay}));
+        println!("Ensuring correctness.");
         assert_eq!(distance(Cell{x:ax, y:ay}, Cell{x:bx, y:by}), d);
     }
 }
@@ -410,8 +424,8 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
 
     let mut valid_positions: Vec<Unit> = Vec::new();
 
-    for x in (-min..state.width + min) {
-        for y in (-min..state.height + min) {
+    for x in (-min..state.width + min).rev() {
+        for y in (-min..state.height + min).rev() {
             let delta = Lattice::new(x, y);
             let pivot = Cell::from(Lattice::from(unit.pivot) + delta);
             let members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
