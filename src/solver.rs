@@ -440,7 +440,7 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
         }
         let discard: bool = valid_positions[i].members.iter().any(|&c| {
             // fixme: make sure this isn't an off by one error
-            c.y == state.height - 1 || has_lower_neighbor(state, c)
+            c.y < state.height - 1 || has_lower_neighbor(state, c)
         });
         if discard {
             // O(1) removal that replaces with last
