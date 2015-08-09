@@ -154,7 +154,30 @@ impl Solver {
                     solution: cmds.into_iter().collect(),
                 }, s.score)
             },
-            _ => unimplemented!()
+            Solver::BottomUp => {
+                let mut solution = String::new();
+                let mut s = state.clone();
+                while !s.game_over {
+                    let possible_next_positions = enumerate_resting_positions(&s);
+                    for u in possible_next_positions {
+                        match find_path(&s, &u) {
+                            None => (),
+                            Some((more_cmds, _score)) => {
+                                s = s.apply_sequence(&string_to_commands(&more_cmds));
+                                solution = solution + &more_cmds;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                (Solution {
+                    problemId: input.id,
+                    seed: s.seed,
+                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    solution: solution,
+                }, s.score)
+            },
         }
     }
 
@@ -255,14 +278,9 @@ impl Random {
     }
 }
 
-// pub fn find_path(s: &State, goal: &Unit) -> Option(&[Commands]) {
-//     let mut s = s.clone();
-//     let mut all_cmds = String::new();
-//     for _ in 0 .. max_cmds {
-//         let (more, snew) = self.commands(&s, options, cmds);
-
-//     }
-// }
+pub fn find_path(s: &State, goal: &Unit) -> Option<(String, Score)> {
+    unimplemented!();
+}
 
 #[cfg(test)]
 mod tests {
@@ -320,12 +338,6 @@ mod tests {
             assert!(snew.score >= s.score);
         }
     }
-}
-
-pub struct BottomUp;
-
-impl BottomUp {
-    fn new() -> Self { BottomUp }
 }
 
 /// Returns distance in number of moves
