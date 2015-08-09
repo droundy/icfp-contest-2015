@@ -13,4 +13,4 @@ echo python parse.py
 python parse.py
 
 ./display_results.py > submission_results.txt
-tail -n 50 submission_results.txt
+head -n 50 submission_results.txt

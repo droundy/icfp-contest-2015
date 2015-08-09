@@ -6,7 +6,7 @@ raw_json = input = open('metadata.json', 'r').read()
 
 results_list = json.loads(raw_json)
 
-results_list = sorted(results_list, key=lambda d: d[u'createdAt'])
+results_list = sorted(results_list, key=lambda d: d[u'createdAt'], reverse=True)
 
 print "Listing five most recent results"
 for my_dict in results_list:
