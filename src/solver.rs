@@ -3,7 +3,6 @@ use super::Direction::*;
 use super::Command::*;
 use super::simulate::Lattice;
 use super::opts::*;
-use std::i32;
 
 extern crate time;
 
@@ -47,7 +46,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: commands_to_string(cmds.clone()),
                 }, s.score)
             },
@@ -63,7 +66,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: commands_to_string(cmds.clone()),
                 }, s.score)
             },
@@ -72,10 +79,10 @@ impl Solver {
 
                 let mut moves: Vec<String> = vec!["p".into(),
                                                   "b".into(),
-                                                  "a".into(),
-                                                  "l".into(),
                                                   "d".into(),
-                                                  "k".into()];
+                                                  "k".into(),
+                                                  "a".into(),
+                                                  "l".into()];
                 for i in 0 .. opt.phrases_of_power.len() {
                     moves.push(opt.phrases_of_power[i].clone());
                 }
@@ -119,8 +126,11 @@ impl Solver {
                             return (Solution {
                                 problemId: input.id,
                                 seed: best_state.seed,
-                                tag: Some(format!("{}[{},{}] = {}", self.name(),
-                                                  input.id, best_state.seed, best_state.score)),
+                                tag: match opt.tag {
+                                    None => Some(format!("{}[{},{}] = {}", self.name(),
+                                                         input.id, best_state.seed, best_state.score)),
+                                    ref tag => tag.clone(),
+                                },
                                 solution: best_cmds,
                             }, best_state.score);
                         }
@@ -132,7 +142,11 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: best_state.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, best_state.seed, best_state.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, best_state.seed, best_state.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: best_cmds,
                 }, best_state.score)
             },
@@ -150,11 +164,60 @@ impl Solver {
                 (Solution {
                     problemId: input.id,
                     seed: s.seed,
-                    tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
                     solution: cmds.into_iter().collect(),
                 }, s.score)
             },
-            _ => unimplemented!()
+            Solver::BottomUp => {
+                let mut solution = String::new();
+                let mut s = state.clone();
+                let mut r = Random::new(3);
+                let mut moves: Vec<String> = vec!["p".into(),
+                                                  "b".into(),
+                                                  "d".into(),
+                                                  "k".into(),
+                                                  "a".into(),
+                                                  "l".into()];
+                for i in 0 .. opt.phrases_of_power.len() {
+                    moves.push(opt.phrases_of_power[i].clone());
+                }
+                let moves = moves;
+                let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
+
+                while !s.game_over {
+                    let possible_next_positions = enumerate_resting_positions(&s);
+                    for i in 0 .. possible_next_positions.len() {
+                        println!("could go to {},{}",
+                                 possible_next_positions[i].pivot.x,
+                                 possible_next_positions[i].pivot.y);
+                    }
+                    for u in possible_next_positions {
+                        match r.find_path(&s, &u, &moves, &seqs) {
+                            None => (),
+                            Some((more_cmds, _score)) => {
+                                s = s.apply_sequence(&string_to_commands(&more_cmds));
+                                solution = solution + &more_cmds;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                (Solution {
+                    problemId: input.id,
+                    seed: s.seed,
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
+                    solution: solution,
+                }, s.score)
+            },
         }
     }
 
@@ -236,7 +299,7 @@ impl Random {
     fn many_commands(&mut self, s: &State, options: &[String], cmds: &[Vec<Command>], max_cmds: usize)
                      -> (String, State) {
         let mut s = s.clone();
-        let mut all_cmds: String = "".into();
+        let mut all_cmds = String::new();
         for _ in 0 .. max_cmds {
             let (more, snew) = self.commands(&s, options, cmds);
             if snew.score < s.score {
@@ -253,16 +316,174 @@ impl Random {
         }
         (all_cmds, s)
     }
+    fn find_level(&mut self, s: &State, target: i32, options: &[String], cmds: &[Vec<Command>])
+                  -> Option<(String, State)> {
+        let mut s = s.clone();
+        let mut all_cmds = String::new();
+        let num_units = s.unit_sequence.len();
+        loop {
+            let (more, snew) = self.commands(&s, options, cmds);
+            if snew.unit_sequence.len() != num_units || snew.game_over {
+                return None;
+            }
+            all_cmds = all_cmds + &more;
+            s = snew;
+            if s.unit_sequence[0].pivot.y >= target {
+                return Some((all_cmds, s));
+            }
+        }
+    }
+    fn find_path(&mut self, input_s: &State, target: &Unit, options: &[String], cmds: &[Vec<Command>])
+                 -> Option<(String, State)> {
+        for _ in 0 .. 20*input_s.width {
+            match self.find_path_once(input_s, target, options, cmds) {
+                None => (),
+                x => {
+                    return x;
+                },
+            }
+        }
+        None
+    }
+    fn find_path_once(&mut self, input_s: &State, target: &Unit, options: &[String], cmds: &[Vec<Command>])
+                      -> Option<(String, State)> {
+        let mut s = input_s.clone();
+        let mut all_cmds = String::new();
+        let mut attempts = 0;
+        let num_units = s.unit_sequence.len();
+
+        let mut level = s.unit_sequence[0].pivot.y + 1;
+        // println!("starting at level {} with target level {}",
+        //          level, target.pivot.y);
+        while level <= target.pivot.y {
+            attempts += 1;
+            match self.find_level(&s, level, options, cmds) {
+                None => (),
+                Some((cmds,news)) => {
+                    all_cmds = all_cmds + &cmds;
+                    s = news;
+                    level = s.unit_sequence[0].pivot.y + 1;
+                    attempts = 0;
+                }
+            }
+            if attempts > 10*s.width {
+                println!("NO PATH to level {} for {},{}!",
+                         level, target.pivot.x, target.pivot.y);
+                return None;
+            }
+        }
+        if s.unit_sequence[0].pivot.y == target.pivot.y {
+            for _ in 0..30*s.width {
+                let (more, snew) = self.commands(&s, &options[0..4], &cmds[0..4]);
+                if snew.unit_sequence.len() != num_units {
+                    continue;
+                }
+                all_cmds = all_cmds + &more;
+                s = snew;
+                if s.unit_sequence[0] == *target {
+                    println!("Found a path to target at {}, {}!",
+                             target.pivot.x, target.pivot.y);
+                    for _ in 0..6 {
+                        let (more, snew) = self.commands(&s, &options[4..6], &cmds[4..6]);
+                        if snew.unit_sequence.len() != num_units {
+                            println!("Found the finisher");
+                            return Some((all_cmds + &more, snew));
+                        }
+                    }
+                }
+            }
+        } else {
+            println!("NO PATH to target: got wrong level {} for {}, {}!",
+                     s.unit_sequence[0].pivot.y,
+                     target.pivot.x, target.pivot.y);
+        }
+        println!("NO PATH to target at {}, {}!",
+                 target.pivot.x, target.pivot.y);
+        None
+    }
 }
 
-// pub fn find_path(s: &State, goal: &Unit) -> Option(&[Commands]) {
-//     let mut s = s.clone();
-//     let mut all_cmds = String::new();
-//     for _ in 0 .. max_cmds {
-//         let (more, snew) = self.commands(&s, options, cmds);
+/// Taxicab-like distance formula for our lattice
 
-//     }
-// }
+// 1 SE = 1
+// 1 E = 1
+// 1 SE - 1 E = 1 SW = 1
+// - 1 SE = 1
+// -1 SE + 1 E = -1 SW = 1
+fn distance(a: Cell, b: Cell) -> i32 {
+    let v: Lattice = Lattice::from(b) - Lattice::from(a);
+    if v.x.is_positive() == v.y.is_positive() {
+        v.x.abs() + v.y.abs()
+    } else {
+        ::std::cmp::max(v.x.abs(), v.y.abs())
+    }
+}
+
+#[test]
+fn test_distance() {
+    // tuples in form (a.x, a.y, b.x, b.y, distance)
+    let tests = &[(1, 2, 0, 5, 3),
+                  (1, 7, 1, 4, 3),
+                  (2, 5, 3, 6, 1),
+                  (2, 5, 2, 6, 1),
+                  (3, 7, 3, 7, 0),
+                  (2, 5, 2, 4, 1),
+                  (2, 5, 3, 4, 1),
+                  (1, 2, 0, 4, 2),
+                  (3, 2, 4, 4, 2),
+                  ];
+    for &(ax, ay, bx, by, d) in tests {
+        println!("a: ({}, {}), b: ({}, {}), d: {}", ax, ay, bx, by, d);
+        println!("Ensuring symmetry.");
+        assert_eq!(distance(Cell{x:ax, y:ay}, Cell{x:bx, y:by}), distance(Cell{x:bx, y:by}, Cell{x:ax, y:ay}));
+        println!("Ensuring correctness.");
+        assert_eq!(distance(Cell{x:ax, y:ay}, Cell{x:bx, y:by}), d);
+    }
+}
+
+fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
+    let unit = &state.unit_sequence[0];
+
+    let min = unit.members.iter().map(|&m| distance(unit.pivot, m)).min().unwrap();
+
+    let mut valid_positions: Vec<Unit> = Vec::new();
+
+    for y in (-min..state.height + min).rev() {
+        for x in (-min..state.width + min).rev() {
+            let delta = Lattice::from(Cell::new(x, y));
+            let pivot = Cell::from(Lattice::from(unit.pivot) + delta);
+            let members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
+            let mut unit = Unit{pivot: pivot, members: members.collect()};
+            for _ in (0..6) {
+                if !state.is_unit_invalid(&unit) {
+                    valid_positions.push(unit.clone());
+                }
+                unit.rotate(Clock::Wise);
+            }
+        }
+    }
+    // We should have all valid positions. Now let's trim them; to start, we only want
+    // ones that have either filled cells or floor below
+    let mut real_positions = Vec::with_capacity(valid_positions.len());
+    for u in valid_positions {
+        #[inline]
+        fn has_lower_neighbor(state: &State, c: Cell) -> bool {
+            state.is_filled(Cell{x: c.x, y: c.y + 1}) ||
+                if c.y % 2 == 0 {
+                    state.is_filled(Cell{x: c.x - 1, y: c.y + 1})
+                } else {
+                    state.is_filled(Cell{x: c.x + 1, y: c.y + 1})
+                }
+        }
+        if u.members.iter().any(|&c| {
+            // fixme: make sure this isn't an off by one error
+            c.y == state.height - 1 || has_lower_neighbor(state, c)
+        }) {
+            real_positions.push(u);
+        }
+    }
+    real_positions
+}
 
 #[cfg(test)]
 mod tests {
@@ -276,10 +497,10 @@ mod tests {
 
         let moves: Vec<String> = vec!["p".into(),
                                       "b".into(),
-                                      "a".into(),
-                                      "l".into(),
                                       "d".into(),
-                                      "k".into()];
+                                      "k".into(),
+                                      "a".into(),
+                                      "l".into()];
         let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
 
         for i in 0..30 {
@@ -300,10 +521,10 @@ mod tests {
 
         let moves: Vec<String> = vec!["p".into(),
                                       "b".into(),
-                                      "a".into(),
-                                      "l".into(),
                                       "d".into(),
-                                      "k".into()];
+                                      "k".into(),
+                                      "a".into(),
+                                      "l".into()];
         let mut seqs: Vec<Vec<Command>> = Vec::new();
         for i in 0 .. moves.len() {
             seqs.push(string_to_commands(&moves[i]));
@@ -320,106 +541,4 @@ mod tests {
             assert!(snew.score >= s.score);
         }
     }
-}
-
-pub struct BottomUp;
-
-impl BottomUp {
-    fn new() -> Self { BottomUp }
-}
-
-/// Returns distance in number of moves
-/// this is a somewhat bizarre distance formula that tells us the number of moves b is
-/// from a
-/// NOTE: it is asymmetric because we can never go up. Moves up will be expressed as
-/// i32::MAX to discourage them by any weighting
-
-// 1 SE = 1
-// 1 E = 1
-// 1 SE - 1 E = 1 SW = 1
-// - 1 SE = MAX
-// -1 SE + 1 E = -1 SW = MAX
-fn distance(a: Cell, b: Cell) -> i32 {
-    let mut v: Lattice = Lattice::from(b) - Lattice::from(a);
-    if v.y < 0 { return i32::MAX }
-    let mut d = 0;
-    while v.x < 0  && v.y >= 0 {
-        d += 1;
-        v.x += 1;
-        v.y -= 1;
-    }
-    d + v.x.abs() + v.y
-}
-
-#[test]
-fn test_distance() {
-    // tuples in form (a.x, a.y, b.x, b.y, distance)
-    let tests = &[(1, 2, 0, 5, 3),
-                  (1, 7, 1, 4, i32::MAX),
-                  (2, 5, 3, 6, 1),
-                  (2, 5, 2, 6, 1),
-                  (3, 7, 3, 7, 0),
-                  (2, 5, 2, 4, i32::MAX),
-                  (2, 5, 3, 4, i32::MAX),
-                  (1, 2, 0, 4, 2),
-                  (3, 2, 4, 4, 2),
-                  ];
-    for &(ax, ay, bx, by, d) in tests {
-        println!("a: ({}, {}), b: ({}, {}), d: {}", ax, ay, bx, by, d);
-        assert_eq!(distance(Cell{x:ax, y:ay}, Cell{x:bx, y:by}), d);
-    }
-}
-
-fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
-    let unit = &state.unit_sequence[0];
-
-    let min = unit.members.iter().map(|&m| distance(unit.pivot, m)).min().unwrap();
-
-    let mut valid_positions: Vec<Unit> = Vec::new();
-
-    for x in (-min..state.width + min) {
-        for y in (-min..state.height + min) {
-            let delta = Lattice::new(x, y);
-            let pivot = Cell::from(Lattice::from(unit.pivot) + delta);
-            let members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
-            let mut unit = Unit{pivot: pivot, members: members.collect()};
-            for _ in (0..6) {
-                if !state.is_unit_invalid(&unit) {
-                    valid_positions.push(unit.clone());
-                }
-                unit.rotate(Clock::Wise);
-            }
-        }
-    }
-    // We should have all valid positions. Now let's trim them; to start, we only want
-    // ones that have either filled cells or floor below
-    let mut i: usize = 0;
-    loop {
-        // done this way because length may change
-        if i >= valid_positions.len() {
-            break
-        }
-        #[inline]
-        fn has_lower_neighbor(state: &State, c: Cell) -> bool {
-            state.is_filled(Cell{x: c.x, y: c.y + 1}) ||
-                if c.y % 2 == 0 {
-                    state.is_filled(Cell{x: c.x - 1, y: c.y + 1})
-                } else {
-                    state.is_filled(Cell{x: c.x + 1, y: c.y + 1})
-                }
-        }
-        let discard: bool = valid_positions[i].members.iter().any(|&c| {
-            // fixme: make sure this isn't an off by one error
-            c.y == state.height - 1 || has_lower_neighbor(state, c)
-        });
-        if discard {
-            // O(1) removal that replaces with last
-            // so don't increment i
-            valid_positions.swap_remove(i);
-        }
-        else {
-            i += 1;
-        }
-    }
-    valid_positions
 }
