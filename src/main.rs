@@ -24,7 +24,7 @@ fn main() {
     else {
         fnames = options.files.clone(); // See above comment
     }
-    let mut joinhandles: Vec<thread::JoinHandle<(Vec<Solution>, Score)>> = Vec::new();
+    let mut joinhandles: Vec<thread::JoinHandle<Vec<(Solution, Score)>>> = Vec::new();
     {
         let mut inputlists: Vec<Vec<(State, Input, DavarOptions)>> = Vec::new();
         for _ in 0 .. options.ncores {
@@ -49,16 +49,18 @@ fn main() {
         }
     }
     let mut solutions: Vec<Solution> = Vec::new();
+    let mut solutions_and_scores: Vec<(Solution, Score)> = Vec::new();
     for jh in joinhandles {
         match jh.join() {
             Err(e) => {
                 println!("Error! {:?}", e);
             }
-            Ok((more_solutions, score)) => {
-                for s in more_solutions {
+            Ok(more_solutions) => {
+                for (s, sc) in more_solutions {
+                    solutions_and_scores.push((s.clone(), sc));
                     solutions.push(s);
+                    totalscore += sc;
                 }
-                totalscore += score;
             }
         }
     }
@@ -66,6 +68,10 @@ fn main() {
         //println!("I am submitting solutions for {}.", i);
         in_out::submit_solutions(&solutions);
     }
+    if options.save_solutions {
+        in_out::save_solutions(&solutions_and_scores);
+    }
+
     if let Some(a) = options.animate {
         for s in solutions {
             s.animate(a);

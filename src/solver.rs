@@ -151,10 +151,9 @@ impl Solver {
         }
     }
 
-    pub fn solve_n(&self, args: &[(State, Input, DavarOptions)]) -> (Vec<Solution>, Score) {
+    pub fn solve_n(&self, args: &[(State, Input, DavarOptions)]) -> Vec<(Solution, Score)> {
         let nargs = args.len() as f64;
         let mut solutions = Vec::new();
-        let mut score = 0;
         for i in 0 .. args.len() {
             let fraction_of_time = (i as f64 + 1.0)/nargs;
             let mut opts = args[i].2.clone();
@@ -164,10 +163,9 @@ impl Solver {
                      opts.time_limit);
             let (sol, sc) = self.solve(&args[i].0, &args[i].1, &opts);
             println!("finished {}[{}, {}] = {}", self.name(), sol.problemId, sol.seed, sc);
-            solutions.push(sol);
-            score += sc;
+            solutions.push((sol, sc));
         }
-        (solutions, score)
+        solutions
     }
 
     pub fn name(&self) -> String {
