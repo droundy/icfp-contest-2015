@@ -1,3 +1,5 @@
+extern crate num;
+
 use super::*;
 use super::Direction::*;
 use super::Command::*;
@@ -316,6 +318,7 @@ impl Random {
         }
         (all_cmds, s)
     }
+
     fn find_level(&mut self, s: &State, target: i32, options: &[String], cmds: &[Vec<Command>])
                   -> Option<(String, State)> {
         let mut s = s.clone();
@@ -333,6 +336,7 @@ impl Random {
             }
         }
     }
+
     fn find_path(&mut self, input_s: &State, target: &Unit, options: &[String], cmds: &[Vec<Command>])
                  -> Option<(String, State)> {
         for _ in 0 .. 20*input_s.width {
@@ -345,6 +349,7 @@ impl Random {
         }
         None
     }
+
     fn find_path_once(&mut self, input_s: &State, target: &Unit, options: &[String], cmds: &[Vec<Command>])
                       -> Option<(String, State)> {
         let mut s = input_s.clone();
@@ -402,6 +407,84 @@ impl Random {
         None
     }
 }
+
+fn get_score(s: &State, goal: &Unit, move_string: &String) -> i32 {         // Return how much closer the move gets you
+    use std::i32;
+    println!("finding distance for {}", move_string);
+    let mut s0 = s.clone();
+    let start_dist = distance(s0.unit_sequence[0].pivot, goal.pivot);
+    println!("Before move looks like: \n{}", s0.visualize());
+
+    for cmd in string_to_commands(&move_string[..]) {
+        s0 = s0.apply(cmd);
+        println!("After a move: \n{}", s0.visualize());
+        if s0.game_over {
+            return i32::MIN         // Game-ending move. Return lowest weight possible.
+        }
+    }
+
+    println!("for {} found score to be: {}\n\n\n\n\n", move_string, start_dist - distance(s0.unit_sequence[0].pivot, goal.pivot));
+    return start_dist - distance(s0.unit_sequence[0].pivot, goal.pivot)
+}
+
+/*fn get_score(s: &State, goal: &Unit, move_string: &String) -> i32 {
+    move_string.len() as i32
+}*/
+
+fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]) -> Vec<String> {
+    let mut recommended_moves: Vec<String> = Vec::new();        // Order moves powerwords first by distance-minimizing
+
+    let mut pop_cpy: Vec<String> = pop.clone().into();  // Order phrases by distance-minimizing
+    pop_cpy.sort_by( |a, b| get_score(s, goal, a).cmp(&get_score(s, goal, b)) );
+    for phrase in pop_cpy {
+        if get_score(s, goal, &phrase) >= 0 {           // If it gets you closer, add it to moves
+            recommended_moves.push(phrase.clone());
+        }
+    }
+
+    let mut moves_cpy: Vec<String> = moves.clone().into();  // Then order moves by distance-minimizing
+    moves_cpy.sort_by( |a, b| get_score(s, goal, a).cmp(&get_score(s, goal, b)) );
+    for mov_str in moves_cpy {
+        if get_score(s, goal, &mov_str) >= 0 {
+            recommended_moves.push(mov_str.clone());
+        }
+    }
+    println!("recommended moves: {:?}", recommended_moves);
+    recommended_moves
+}
+
+pub fn find_paths_dfs(s: &State, goal_unit: Unit, pop: &[String]) -> Vec<String> {
+    let mut out_cmd_str: Vec<String> = Vec::new();
+
+    let mut state = s.clone();
+    let mut my_unit = &state.unit_sequence[0];
+
+    let mut moves: Vec<String> = Vec::new();
+    moves.push("p".into()); // W
+    moves.push("b".into()); // E
+    moves.push("a".into()); // SW
+    moves.push("l".into()); // SE
+    moves.push("d".into()); // CW
+    moves.push("k".into()); // CCW
+
+    //println!("{}", state.visualize());
+    //println!("unit x: {} unit y: {}", my_unit.pivot.x, my_unit.pivot.y);
+    //println!("goal x: {} goal y: {}", goal_unit.pivot.x, goal_unit.pivot.y);
+    //println!("distance: {}", distance(my_unit.pivot, goal_unit.pivot));
+
+    get_move_ranking_dfs(s, &goal_unit, pop, &moves[..]);
+
+    out_cmd_str
+}
+
+// pub fn find_path(s: &State, goal: &Unit) -> Option(&[Commands]) {
+//     let mut s = s.clone();
+//     let mut all_cmds = String::new();
+//     for _ in 0 .. max_cmds {
+//         let (more, snew) = self.commands(&s, options, cmds);
+
+//     }
+// }
 
 /// Taxicab-like distance formula for our lattice
 
