@@ -190,6 +190,11 @@ impl Solver {
 
                 while !s.game_over {
                     let possible_next_positions = enumerate_resting_positions(&s);
+                    for i in 0 .. possible_next_positions.len() {
+                        println!("could go to {},{}",
+                                 possible_next_positions[i].pivot.x,
+                                 possible_next_positions[i].pivot.y);
+                    }
                     for u in possible_next_positions {
                         match r.find_path(&s, &u, &moves, &seqs) {
                             None => (),
@@ -431,9 +436,9 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
 
     let mut valid_positions: Vec<Unit> = Vec::new();
 
-    for x in (-min..state.width + min).rev() {
-        for y in (-min..state.height + min).rev() {
-            let delta = Lattice::new(x, y);
+    for y in (-min..state.height + min).rev() {
+        for x in (-min..state.width + min).rev() {
+            let delta = Lattice::from(Cell::new(x, y));
             let pivot = Cell::from(Lattice::from(unit.pivot) + delta);
             let members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
             let mut unit = Unit{pivot: pivot, members: members.collect()};
@@ -447,12 +452,8 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
     }
     // We should have all valid positions. Now let's trim them; to start, we only want
     // ones that have either filled cells or floor below
-    let mut i: usize = 0;
-    loop {
-        // done this way because length may change
-        if i >= valid_positions.len() {
-            break
-        }
+    let mut real_positions = Vec::with_capacity(valid_positions.len());
+    for u in valid_positions {
         #[inline]
         fn has_lower_neighbor(state: &State, c: Cell) -> bool {
             state.is_filled(Cell{x: c.x, y: c.y + 1}) ||
@@ -462,20 +463,14 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
                     state.is_filled(Cell{x: c.x + 1, y: c.y + 1})
                 }
         }
-        let keep: bool = valid_positions[i].members.iter().any(|&c| {
+        if u.members.iter().any(|&c| {
             // fixme: make sure this isn't an off by one error
             c.y == state.height - 1 || has_lower_neighbor(state, c)
-        });
-        if !keep {
-            // O(1) removal that replaces with last
-            // so don't increment i
-            valid_positions.swap_remove(i);
-        }
-        else {
-            i += 1;
+        }) {
+            real_positions.push(u);
         }
     }
-    valid_positions
+    real_positions
 }
 
 #[cfg(test)]
