@@ -296,16 +296,30 @@ mod tests {
     }
 }
 
-fn d2(a: Cell, b: Cell) -> i32 {
+pub struct BottomUp;
+
+impl BottomUp {
+    fn new() -> Self { BottomUp }
+}
+
+impl Solver for BottomUp {
+    fn name(&self) -> String { "bottomup".into() }
+
+    fn solve(&self, state: &State, input: &Input, _opt: &DavarOptions) -> (Solution, Score) {
+        unimplemented!()
+    }
+}
+
+/// Taxicab distance function
+fn distance(a: Cell, b: Cell) -> i32 {
     let v: Lattice = Lattice::from(b) - Lattice::from(a);
-    v.x.pow(2) + v.y.pow(2)
+    v.x.abs() + v.y.abs()
 }
 
 fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
     let unit = &state.unit_sequence[0];
 
-    let min2 = unit.members.iter().map(|&m| d2(unit.pivot, m)).min().unwrap();
-    let min = (min2 as f32).sqrt() as i32;
+    let min = unit.members.iter().map(|&m| distance(unit.pivot, m)).min().unwrap();
 
     let mut valid_positions: Vec<Unit> = Vec::new();
 
