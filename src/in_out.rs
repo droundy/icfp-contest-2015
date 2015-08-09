@@ -106,3 +106,19 @@ pub fn submit_solutions(s: &Vec<Solution>) {
         .arg("https://davar.icfpcontest.org/teams/97/solutions")
         .spawn().unwrap().wait().unwrap();
 }
+
+pub fn save_solutions(s: &Vec<(Solution, Score)>) {
+    use std::fs::File;
+    use std::io::Write;
+    for i in 0 .. s.len() {
+        let fname = format!("solutions/{}-{}-{}.json",
+                            s[i].0.problemId, s[i].0.seed, s[i].1);
+        match File::create(&fname) {
+            Err(..) => (),
+            Ok(mut f) => {
+                let sol = s[i].0.clone();
+                f.write_all(&json::encode(&[sol]).unwrap().into_bytes());
+            }
+        }
+    }
+}
