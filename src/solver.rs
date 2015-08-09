@@ -327,13 +327,13 @@ impl BottomUp {
     fn new() -> Self { BottomUp }
 }
 
-impl Solver for BottomUp {
-    fn name(&self) -> String { "bottomup".into() }
+// impl Solver for BottomUp {
+//     fn name(&self) -> String { "bottomup".into() }
 
-    fn solve(&self, state: &State, input: &Input, _opt: &DavarOptions) -> (Solution, Score) {
-        unimplemented!()
-    }
-}
+//     fn solve(&self, state: &State, input: &Input, _opt: &DavarOptions) -> (Solution, Score) {
+//         unimplemented!()
+//     }
+// }
 
 /// Taxicab distance function
 fn distance(a: Cell, b: Cell) -> i32 {
