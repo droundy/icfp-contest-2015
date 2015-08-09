@@ -91,7 +91,7 @@ pub fn opts() -> DavarOptions {
     }
 
     davar_options.solution = matches.opt_str("solution");
-    davar_options.tag = matches.opt_str("solution");
+    davar_options.tag = matches.opt_str("tag");
 
     davar_options
 }
