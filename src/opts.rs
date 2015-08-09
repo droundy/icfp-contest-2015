@@ -15,6 +15,8 @@ pub struct DavarOptions {
     pub solver: String,
     pub animate: Option<u32>,
     pub starting_time: f64,
+    pub seed: Option<i32>,
+    pub solution: Option<String>,
 }
 
 impl DavarOptions {
@@ -37,6 +39,8 @@ pub fn opts() -> DavarOptions {
     opts.optopt("m", "", "memory limit", "MEGABYTES");
     opts.optmulti("p", "", "phrase of power", "PHRASE");
     opts.optopt("", "animate", "MILISECONDS", "display animation of solution");
+    opts.optopt("", "seed", "INT", "specify if you only want to run for a single seed");
+    opts.optopt("", "solution", "STRING", "Only used with \"supplied\" solver. Instead of running an algorithm, will just solve with this solution.");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m }
         Err(f) => { panic!(f.to_string()) }
@@ -56,6 +60,8 @@ pub fn opts() -> DavarOptions {
         solver: "alldone".into(),
         animate: None,
         starting_time: time::precise_time_s(),
+        seed: None,
+        solution: None,
     };
     if let Some(nc) = matches.opt_str("c") {
         davar_options.ncores = nc.parse().unwrap();
@@ -72,5 +78,11 @@ pub fn opts() -> DavarOptions {
     if let Some(a) = matches.opt_str("animate") {
         davar_options.animate = Some(a.parse().unwrap());
     }
+    if let Some(s) = matches.opt_str("seed") {
+        davar_options.seed = Some(s.parse().unwrap());
+    }
+
+    davar_options.solution = matches.opt_str("solution");
+
     davar_options
 }

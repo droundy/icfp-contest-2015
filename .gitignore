@@ -33,3 +33,7 @@
 # Rust files
 Cargo.lock
 target/
+
+# other
+metadata.json
+parsed/

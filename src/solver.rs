@@ -15,6 +15,8 @@ pub fn name_to_solver(name: &str) -> Box<Solver> {
     let solvers: Vec<Box<Solver>> = vec![Box::new(AllDown::new()),
                                          Box::new(SolverSE::new()),
                                          Box::new(MonteCarlo::new()),
+                                         Box::new(Supplied::new()),
+                                         Box::new(BottomUp::new()),
                                          ];
     for s in solvers.into_iter() {
         if s.name() == name {
@@ -167,6 +169,15 @@ impl Random {
     }
 }
 
+// pub fn find_path(s: &State, goal: &Unit) -> Option(&[Commands]) {
+//     let mut s = s.clone();
+//     let mut all_cmds = String::new();
+//     for _ in 0 .. max_cmds {
+//         let (more, snew) = self.commands(&s, options, cmds);
+
+//     }
+// }
+
 impl Solver for MonteCarlo {
     fn name(&self) -> String { format!("mc") }
     fn solve(&self, state: &State, input: &Input, opt: &DavarOptions) -> (Solution, Score) {
@@ -187,9 +198,9 @@ impl Solver for MonteCarlo {
         let mut best_cmds: String = "".into();
         let mut best_state = state.clone();
         let original_time_left = opt.time_left();
-        let mut current_time_left = original_time_left;
+        let mut current_time_left;// = original_time_left;
         let mut iters_per_time_check = 100;
-        let mut time_per_iter = 1.0;
+        let mut time_per_iter;// = 1.0;
         let time_per_check_goal = 0.25;
         for iters in 1..1000000000 {
             let (cmds, mut new_s) = r.many_commands(&state, &moves, &seqs, 10000);
@@ -329,4 +340,34 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
         }
     }
     valid_positions
+}
+
+
+pub struct Supplied;
+
+impl Supplied {
+    fn new() -> Self { Supplied }
+}
+
+impl Solver for Supplied {
+    fn name(&self) -> String { "supplied".into() }
+
+    fn solve(&self, state: &State, input: &Input, _opt: &DavarOptions) -> (Solution, Score) {
+        let mut s = state.clone();
+
+        let old_solution = _opt.solution.clone().expect("Must enter solution to use \"supplied\" solver");
+        let mut cmds: Vec<char> = Vec::new();
+
+        for ch in old_solution.chars() {
+            let cmd = string_to_commands(&*ch.to_string())[0];
+            s = s.apply(cmd);
+            cmds.push(ch);
+        }
+        (Solution {
+            problemId: input.id,
+            seed: s.seed,
+            tag: Some(format!("{}[{},{}] = {}", self.name(), input.id, s.seed, s.score)),
+            solution: cmds.into_iter().collect(),
+        }, s.score)
+    }
 }

@@ -33,6 +33,7 @@ fn main() {
         let num_states = states.len();
         for state in states {
             let (solution, score) = solver.solve(&state, &input, &options);
+
             if let Some(a) = options.animate {
                 solution.animate(a);
             }

@@ -77,7 +77,6 @@ impl Cell {
 
 impl Unit {
     fn command(&mut self, c: Command) {
-        let piv = Lattice::from(self.pivot);
         match c {
             Command::Move(d) => self.pivot = self.pivot.moved(d),
             _ => (),
@@ -91,7 +90,7 @@ impl Unit {
     }
     pub fn rotate(&mut self, r: Clock) {
         let piv = Lattice::from(self.pivot);
-        for mut member in &mut self.members {
+        for member in &mut self.members {
             let dc = Lattice::from(*member) - piv;
             *member = Cell::from(piv + dc.rotated(r));
         };
