@@ -335,6 +335,18 @@ impl Random {
     }
     fn find_path(&mut self, input_s: &State, target: &Unit, options: &[String], cmds: &[Vec<Command>])
                  -> Option<(String, State)> {
+        for _ in 0 .. 20*input_s.width {
+            match self.find_path_once(input_s, target, options, cmds) {
+                None => (),
+                x => {
+                    return x;
+                },
+            }
+        }
+        None
+    }
+    fn find_path_once(&mut self, input_s: &State, target: &Unit, options: &[String], cmds: &[Vec<Command>])
+                      -> Option<(String, State)> {
         let mut s = input_s.clone();
         let mut all_cmds = String::new();
         let mut attempts = 0;
