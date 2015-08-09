@@ -4,6 +4,8 @@ use super::Command::*;
 use super::simulate::Lattice;
 use super::opts::*;
 
+extern crate time;
+
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Solver {
     AllDown,
@@ -85,7 +87,7 @@ impl Solver {
                 let mut current_time_left;// = original_time_left;
                 let mut iters_per_time_check = 100;
                 let mut time_per_iter;// = 1.0;
-                let time_per_check_goal = 0.5;
+                let time_per_check_goal = if original_time_left < 2.0 { original_time_left/20.0 } else { 0.5 };
                 for iters in 1..1000000000 {
                     let (cmds, mut new_s) = r.many_commands(&state, &moves, &seqs, 10000);
                     if new_s.score > 0 {
@@ -147,6 +149,25 @@ impl Solver {
             },
             _ => unimplemented!()
         }
+    }
+
+    pub fn solve_n(&self, args: &[(State, Input, DavarOptions)]) -> (Vec<Solution>, Score) {
+        let nargs = args.len() as f64;
+        let mut solutions = Vec::new();
+        let mut score = 0;
+        for i in 0 .. args.len() {
+            let fraction_of_time = (i as f64 + 1.0)/nargs;
+            let mut opts = args[i].2.clone();
+            opts.time_limit = fraction_of_time*opts.time_limit;
+            println!("{}/{} seconds left",
+                     opts.time_limit + opts.starting_time - time::precise_time_s(),
+                     opts.time_limit);
+            let (sol, sc) = self.solve(&args[i].0, &args[i].1, &opts);
+            println!("finished {}[{}, {}] = {}", self.name(), sol.problemId, sol.seed, sc);
+            solutions.push(sol);
+            score += sc;
+        }
+        (solutions, score)
     }
 
     pub fn name(&self) -> String {
