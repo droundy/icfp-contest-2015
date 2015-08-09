@@ -157,10 +157,23 @@ impl Solver {
             Solver::BottomUp => {
                 let mut solution = String::new();
                 let mut s = state.clone();
+                let mut r = Random::new(3);
+                let mut moves: Vec<String> = vec!["p".into(),
+                                                  "b".into(),
+                                                  "a".into(),
+                                                  "l".into(),
+                                                  "d".into(),
+                                                  "k".into()];
+                for i in 0 .. opt.phrases_of_power.len() {
+                    moves.push(opt.phrases_of_power[i].clone());
+                }
+                let moves = moves;
+                let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
+
                 while !s.game_over {
                     let possible_next_positions = enumerate_resting_positions(&s);
                     for u in possible_next_positions {
-                        match find_path(&s, &u) {
+                        match r.find_path(&s, &u, &moves, &seqs) {
                             None => (),
                             Some((more_cmds, _score)) => {
                                 s = s.apply_sequence(&string_to_commands(&more_cmds));
@@ -259,7 +272,7 @@ impl Random {
     fn many_commands(&mut self, s: &State, options: &[String], cmds: &[Vec<Command>], max_cmds: usize)
                      -> (String, State) {
         let mut s = s.clone();
-        let mut all_cmds: String = "".into();
+        let mut all_cmds = String::new();
         for _ in 0 .. max_cmds {
             let (more, snew) = self.commands(&s, options, cmds);
             if snew.score < s.score {
@@ -276,68 +289,76 @@ impl Random {
         }
         (all_cmds, s)
     }
+    fn find_level(&mut self, s: &State, target: i32, options: &[String], cmds: &[Vec<Command>])
+                  -> Option<(String, State)> {
+        println!("calling find_level");
+        let mut s = s.clone();
+        let mut all_cmds = String::new();
+        let num_units = s.unit_sequence.len();
+        loop {
+            let (more, snew) = self.commands(&s, options, cmds);
+            if snew.unit_sequence.len() != num_units || snew.game_over {
+                return None;
+            }
+            all_cmds = all_cmds + &more;
+            s = snew;
+            if s.unit_sequence[0].pivot.y >= target {
+                return Some((all_cmds, s));
+            }
+        }
+    }
+    fn find_path(&mut self, input_s: &State, target: &Unit, options: &[String], cmds: &[Vec<Command>])
+                     -> Option<(String, State)> {
+        println!("calling find_path");
+        let mut s = input_s.clone();
+        let mut all_cmds = String::new();
+        let mut attempts = 0;
+        let num_units = s.unit_sequence.len();
+
+        let mut level = s.unit_sequence[0].pivot.y + 1;
+        println!("starting at level {} with target level {}",
+                 level, target.pivot.y);
+        while level <= target.pivot.y {
+            attempts += 1;
+            match self.find_level(&s, level, options, cmds) {
+                None => (),
+                Some((cmds,news)) => {
+                    all_cmds = all_cmds + &cmds;
+                    s = news;
+                    level = s.unit_sequence[0].pivot.y + 1;
+                    attempts = 0;
+                }
+            }
+            if attempts > 10*s.width {
+                return None;
+            }
+        }
+        if s.unit_sequence[0].pivot.y == target.pivot.y {
+            for _ in 0..10*s.width {
+                let (more, snew) = self.commands(&s, &options[0..4], &cmds[0..4]);
+                if snew.unit_sequence.len() != num_units {
+                    continue;
+                }
+                all_cmds = all_cmds + &more;
+                s = snew;
+                if s.unit_sequence[0] == *target {
+                    println!("Found a path to target!");
+                    for _ in 0..6 {
+                        let (more, snew) = self.commands(&s, &options[0..6], &cmds[0..6]);
+                        if snew.unit_sequence.len() != num_units {
+                            println!("Found the fnisher");
+                            return Some((all_cmds + &more, snew));
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
 }
 
 pub fn find_path(s: &State, goal: &Unit) -> Option<(String, Score)> {
     unimplemented!();
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use super::super::*;
-
-    #[test]
-    fn test_random_many_commands() {
-        let states = input_to_states(&Input::from_json("problems/problem_0.json"));
-        let s = states[0].clone();
-
-        let moves: Vec<String> = vec!["p".into(),
-                                      "b".into(),
-                                      "a".into(),
-                                      "l".into(),
-                                      "d".into(),
-                                      "k".into()];
-        let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
-
-        for i in 0..30 {
-            let mut r = Random::new(i);
-            let (cmds, snew) = r.many_commands(&s, &moves, &seqs, 100);
-            let alt_snew = s.apply_sequence(&string_to_commands(&cmds));
-            println!("cmds {}", cmds);
-            assert_eq!(snew.score, alt_snew.score);
-        }
-    }
-
-    #[test]
-    fn test_random_commands() {
-        let states = input_to_states(&Input::from_json("problems/problem_0.json"));
-        let mut s = states[0].clone();
-        s.score = 5;
-        let s = s;
-
-        let moves: Vec<String> = vec!["p".into(),
-                                      "b".into(),
-                                      "a".into(),
-                                      "l".into(),
-                                      "d".into(),
-                                      "k".into()];
-        let mut seqs: Vec<Vec<Command>> = Vec::new();
-        for i in 0 .. moves.len() {
-            seqs.push(string_to_commands(&moves[i]));
-            println!("hello {} -> {:?}", moves[i], seqs[i]);
-        }
-        let seqs = seqs;
-
-        for i in 0..30 {
-            let mut r = Random::new(i);
-            let (cmds, snew) = r.commands(&s, &moves, &seqs);
-            let alt_snew = s.apply_sequence(&string_to_commands(&cmds));
-            println!("cmds {}", cmds);
-            assert_eq!(snew.score, alt_snew.score);
-            assert!(snew.score >= s.score);
-        }
-    }
 }
 
 /// Returns distance in number of moves
@@ -434,4 +455,62 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
         }
     }
     valid_positions
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::super::*;
+
+    #[test]
+    fn test_random_many_commands() {
+        let states = input_to_states(&Input::from_json("problems/problem_0.json"));
+        let s = states[0].clone();
+
+        let moves: Vec<String> = vec!["p".into(),
+                                      "b".into(),
+                                      "d".into(),
+                                      "k".into(),
+                                      "a".into(),
+                                      "l".into()];
+        let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
+
+        for i in 0..30 {
+            let mut r = Random::new(i);
+            let (cmds, snew) = r.many_commands(&s, &moves, &seqs, 100);
+            let alt_snew = s.apply_sequence(&string_to_commands(&cmds));
+            println!("cmds {}", cmds);
+            assert_eq!(snew.score, alt_snew.score);
+        }
+    }
+
+    #[test]
+    fn test_random_commands() {
+        let states = input_to_states(&Input::from_json("problems/problem_0.json"));
+        let mut s = states[0].clone();
+        s.score = 5;
+        let s = s;
+
+        let moves: Vec<String> = vec!["p".into(),
+                                      "b".into(),
+                                      "a".into(),
+                                      "l".into(),
+                                      "d".into(),
+                                      "k".into()];
+        let mut seqs: Vec<Vec<Command>> = Vec::new();
+        for i in 0 .. moves.len() {
+            seqs.push(string_to_commands(&moves[i]));
+            println!("hello {} -> {:?}", moves[i], seqs[i]);
+        }
+        let seqs = seqs;
+
+        for i in 0..30 {
+            let mut r = Random::new(i);
+            let (cmds, snew) = r.commands(&s, &moves, &seqs);
+            let alt_snew = s.apply_sequence(&string_to_commands(&cmds));
+            println!("cmds {}", cmds);
+            assert_eq!(snew.score, alt_snew.score);
+            assert!(snew.score >= s.score);
+        }
+    }
 }
