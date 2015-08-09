@@ -204,9 +204,15 @@ impl Solver for MonteCarlo {
         let time_per_check_goal = 0.25;
         for iters in 1..1000000000 {
             let (cmds, mut new_s) = r.many_commands(&state, &moves, &seqs, 10000);
-            let pop_score = simulate::score_pop(&cmds, &opt.phrases_of_power);
-            // println!("scores {} and {}", new_s.score, pop_score);
-            new_s.score += pop_score;
+            if new_s.score > 0 {
+                // Only count pop_score if we have a non-zero other
+                // score, since otherwise we could accidentally count
+                // something as nonzero that actually has zero score
+                // for doing an illegal move.  Maybe this fixes bug?
+                let pop_score = simulate::score_pop(&cmds, &opt.phrases_of_power);
+                // println!("scores {} and {}", new_s.score, pop_score);
+                new_s.score += pop_score;
+            }
             let new_s = new_s;
             if iters % iters_per_time_check == 0 {
                 current_time_left = opt.time_left();
