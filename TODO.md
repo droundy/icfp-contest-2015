@@ -6,14 +6,15 @@
         - First by simply selecting characters
         - Then try adding excursions
 
-    * Time-limiter
-    * Parallelize with threads
     * Space-limiter (needs to know details of data structures)
 
 - Learn phrases of power.
 
 # Done
 ---
+- Time-limiter
+- Parallelize with threads
+
 - Define data structures for elements.
 
 - Parse json program business.

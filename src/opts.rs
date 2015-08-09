@@ -13,6 +13,7 @@ pub struct DavarOptions {
     pub time_limit: f64,
     pub memory_limit: Option<usize>,
     pub phrases_of_power: Vec<String>,
+    pub save_solutions: bool,
     pub solver: String,
     pub animate: Option<u32>,
     pub starting_time: f64,
@@ -33,6 +34,7 @@ pub fn opts() -> DavarOptions {
 
     let mut opts = getopts::Options::new();
     opts.optflag("", "submit", "submit to server");
+    opts.optflag("", "save", "save solutions as files");
     opts.optopt("", "solver", "name of solver algorithm", "ALGORITHM");
     opts.optopt("c", "", "number of cores", "NCORE");
     opts.optflag("h", "help", "print this help menu");
@@ -55,6 +57,7 @@ pub fn opts() -> DavarOptions {
     let mut davar_options = DavarOptions {
         ncores: 1,
         submit: matches.opt_present("submit"),
+        save_solutions: matches.opt_present("save"),
         files: matches.opt_strs("f"),
         time_limit: 60.0*60.0*24.0, // one day time limit!
         memory_limit: None,

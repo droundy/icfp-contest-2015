@@ -4,6 +4,8 @@ use super::Command::*;
 use super::simulate::Lattice;
 use super::opts::*;
 
+extern crate time;
+
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Solver {
     AllDown,
@@ -85,10 +87,15 @@ impl Solver {
                 let mut current_time_left;// = original_time_left;
                 let mut iters_per_time_check = 100;
                 let mut time_per_iter;// = 1.0;
-                let time_per_check_goal = 0.5;
+                let time_per_check_goal = if original_time_left < 2.0 { original_time_left/20.0 } else { 0.5 };
                 for iters in 1..1000000000 {
-                    let (cmds, mut new_s) = r.many_commands(&state, &moves, &seqs, 10000);
+                    let split_point = if best_cmds.len() > 0 { r.random() % best_cmds.len() } else { 0 };
+                    let start: String = best_cmds[0..split_point].into();
+                    let mid_state = simulate::score_commands(string_to_commands(&start),
+                                                             &state);
+                    let (mut cmds, mut new_s) = r.many_commands(&mid_state, &moves, &seqs, 10000);
                     if new_s.score > 0 {
+                        cmds = start + &cmds;
                         // Only count pop_score if we have a non-zero other
                         // score, since otherwise we could accidentally count
                         // something as nonzero that actually has zero score
@@ -98,6 +105,13 @@ impl Solver {
                         new_s.score += pop_score;
                     }
                     let new_s = new_s;
+                    if new_s.score > best_state.score {
+                        // println!("Found better score with {} > {}",
+                        //          new_s.score, best_state.score);
+                        best_cmds.truncate(split_point);
+                        best_cmds = cmds;
+                        best_state = new_s;
+                    }
                     if iters % iters_per_time_check == 0 {
                         current_time_left = opt.time_left();
                         if current_time_left < 3.0*time_per_check_goal {
@@ -111,12 +125,6 @@ impl Solver {
                         }
                         time_per_iter = (original_time_left - current_time_left) / iters as f64;
                         iters_per_time_check = (time_per_check_goal / time_per_iter) as usize
-                    }
-                    if new_s.score > best_state.score {
-                        // println!("Found better score with {} > {}",
-                        //          new_s.score, best_state.score);
-                        best_cmds = cmds;
-                        best_state = new_s;
                     }
                 }
 
@@ -147,6 +155,23 @@ impl Solver {
             },
             _ => unimplemented!()
         }
+    }
+
+    pub fn solve_n(&self, args: &[(State, Input, DavarOptions)]) -> Vec<(Solution, Score)> {
+        let nargs = args.len() as f64;
+        let mut solutions = Vec::new();
+        for i in 0 .. args.len() {
+            let fraction_of_time = (i as f64 + 1.0)/nargs;
+            let mut opts = args[i].2.clone();
+            opts.time_limit = fraction_of_time*opts.time_limit;
+            // println!("{}/{} seconds left",
+            //          opts.time_limit + opts.starting_time - time::precise_time_s(),
+            //          opts.time_limit);
+            let (sol, sc) = self.solve(&args[i].0, &args[i].1, &opts);
+            println!("finished {}[{}, {}] = {}", self.name(), sol.problemId, sol.seed, sc);
+            solutions.push((sol, sc));
+        }
+        solutions
     }
 
     pub fn name(&self) -> String {
