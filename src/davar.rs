@@ -291,11 +291,9 @@ pub fn get_source_order(seed: i32, num: i32) -> Vec<i32> {
 
     let mut x: Wrapping<u32> = Wrapping(seed as u32);
 
-    out_vec.push(getout(x));
-
     for _ in 0..(num as usize) {
-      x = multiplier*x + increment;
       out_vec.push(getout(x));
+      x = multiplier*x + increment;
     }
 
     out_vec

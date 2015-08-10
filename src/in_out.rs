@@ -117,7 +117,7 @@ pub fn save_solutions(s: &Vec<(Solution, Score)>) {
             Err(..) => (),
             Ok(mut f) => {
                 let sol = s[i].0.clone();
-                f.write_all(&json::encode(&[sol]).unwrap().into_bytes());
+                f.write_all(&json::encode(&[sol]).unwrap().into_bytes()).ok().expect("Couldn't save :(");
             }
         }
     }

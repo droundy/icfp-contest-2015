@@ -1,14 +1,10 @@
 - finish / debug look_ahead
 
-- sorting pop by length (long first)
-
 - work out timing / killing
 
-- sort by center of mass
-
-- check path without pop, then with
-
 - PYTHON: Parse submit JSON to find/submit best ones
+
+- pop scorer
 
 
 
@@ -33,6 +29,7 @@
 # Done
 ---
 - Time-limiter
+
 - Parallelize with threads
 
 - Define data structures for elements.
@@ -46,3 +43,9 @@
 - Implement pseudorandom number generator
 
 - Implement cool animations.
+
+- sorting pop by length (long first)
+
+- sort by center of mass
+
+- check path without pop, then with
