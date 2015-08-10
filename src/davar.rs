@@ -265,7 +265,7 @@ pub fn string_to_commands(s: &str) -> Vec<Command> {
             'd' | 'q' | 'r' | 'v' | 'z' | '1' => out.push(Command::Rotate(Clock::Wise)),
             'k' | 's' | 't' | 'u' | 'w' | 'x' => out.push(Command::Rotate(Clock::Counter)),
             '\t' | '\n' | '\r' => (),
-            _ => unreachable!(),
+            _ => (), // ugh
         };
     }
     out
