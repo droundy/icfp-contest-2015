@@ -5,7 +5,6 @@ use super::Direction::*;
 use super::Command::*;
 use super::simulate::Lattice;
 use super::opts::*;
-use super::time::{PreciseTime, Duration};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Solver {
@@ -96,7 +95,6 @@ impl Solver {
                 let mut best_cmds: String = "".into();
                 let mut best_state = state.clone();
                 let original_time_left = opt.time_left();
-                let mut current_time_left;// = original_time_left;
                 let mut iters_per_time_check = 100;
                 let mut time_per_iter;// = 1.0;
                 let time_per_check_goal = if original_time_left < 2.0 { original_time_left/20.0 } else { 0.5 };
@@ -125,7 +123,7 @@ impl Solver {
                         best_state = new_s;
                     }
                     if iters % iters_per_time_check == 0 {
-                        current_time_left = opt.time_left();
+                        let current_time_left = opt.time_left();
                         if current_time_left < 3.0*time_per_check_goal {
                             return (Solution {
                                 problemId: input.id,
@@ -226,9 +224,7 @@ impl Solver {
                 }, s.score)
             },
             Solver::BottomUpDfs => {
-                let extra_time = Duration::seconds(1);
-                let start = PreciseTime::now();
-                let time_limit = Duration::seconds(opt.time_limit as i64);
+                let extra_time = 1.0;
 
                 let mut solution = String::new();
                 let mut s = state.clone();
@@ -237,7 +233,7 @@ impl Solver {
                 pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
                 // let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
 
-                let mut now = PreciseTime::now();
+                let mut find_path_opt = opt.clone();
 
                 'bu_dfs_main_loop: while !s.game_over {
                     let possible_next_positions = enumerate_resting_positions(&s);
@@ -249,19 +245,21 @@ impl Solver {
                     if possible_next_positions.len() == 0 {
                         break;
                     }
-                    let time_left = time_limit - start.to(now);
-                    let pieces_left = s.unit_sequence.len() as i32;
+                    let time_left = opt.time_left();
+                    let pieces_left = s.unit_sequence.len() as f64;
                     // Super hokey heuristic. Estimating that the number of
                     // possible_next_positions that we have to try for failed attempts
                     // somehow cancels out with the times that finding paths goes really
                     // quickly.
-                    let time_to_find: Duration = time_left / pieces_left;
+                    let time_for_path = time_left / pieces_left;
                     for u in possible_next_positions {
-                        match find_path_dfs(&s, &u, &[], time_to_find) {
+                        find_path_opt.time_limit = opt.time_limit - time_left + time_for_path;
+                        match find_path_dfs(&s, &u, &[], &find_path_opt) {
                             None => (),
                             Some(_) => {
                                 // we want extra time for when we're using pops
-                                match find_path_dfs(&s, &u, &opt.phrases_of_power, time_to_find*2) {
+                                find_path_opt.time_limit += 2.0*time_for_path;
+                                match find_path_dfs(&s, &u, &opt.phrases_of_power, &find_path_opt) {
                                     Some((mut more_cmds, _)) => {
                                         more_cmds = more_cmds + "l";
                                         s = s.apply_sequence(&string_to_commands(&more_cmds));
@@ -278,8 +276,7 @@ impl Solver {
                                 }
                             }
                         }
-                        now = PreciseTime::now();
-                        if time_limit - start.to(now) < extra_time { break 'bu_dfs_main_loop; }
+                        if opt.time_left() < extra_time { break 'bu_dfs_main_loop; }
                     }
                 }
 
@@ -300,39 +297,40 @@ impl Solver {
                 }, s.score)
             },
             Solver::LookAhead => {
-                let depth: u8 = 0;
+                unimplemented!()
+                // let depth: u8 = 0;
 
-                let extra_time = Duration::seconds(1);
-                let start = PreciseTime::now();
-                let time_limit = Duration::seconds(opt.time_limit as i64);
+                // let extra_time = Duration::seconds(1);
+                // let start = PreciseTime::now();
+                // let time_limit = Duration::seconds(opt.time_limit as i64);
 
-                let mut solution = String::new();
-                let mut s = state.clone();
+                // let mut solution = String::new();
+                // let mut s = state.clone();
 
-                let mut pop_sorted = opt.phrases_of_power.clone();
-                pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
+                // let mut pop_sorted = opt.phrases_of_power.clone();
+                // pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
 
-                let mut now;
+                // let mut now;
 
-                'lu_main_loop: while !s.game_over {
-                    let nlooks = s.unit_sequence.len() as i32 / (depth + 1) as i32;
-                    now = PreciseTime::now();
-                    let time_to_look = (time_limit - start.to(now) - extra_time) / nlooks;
-                    let (new_sol, new_state) = look_ahead_dfs(&s, &solution, depth, &pop_sorted, time_to_look);
-                    solution = new_sol;
-                    s = new_state;
-                }
+                // 'lu_main_loop: while !s.game_over {
+                //     let nlooks = s.unit_sequence.len() as i32 / (depth + 1) as i32;
+                //     now = PreciseTime::now();
+                //     let time_to_look = (time_limit - start.to(now) - extra_time) / nlooks;
+                //     let (new_sol, new_state) = look_ahead_dfs(&s, &solution, depth, &pop_sorted, time_to_look);
+                //     solution = new_sol;
+                //     s = new_state;
+                // }
 
-                (Solution {
-                    problemId: input.id,
-                    seed: s.seed,
-                    tag: match opt.tag {
-                        None => Some(format!("{}[{},{}] = {}", self.name(),
-                                             input.id, s.seed, s.score)),
-                        ref tag => tag.clone(),
-                    },
-                    solution: solution,
-                }, s.score)
+                // (Solution {
+                //     problemId: input.id,
+                //     seed: s.seed,
+                //     tag: match opt.tag {
+                //         None => Some(format!("{}[{},{}] = {}", self.name(),
+                //                              input.id, s.seed, s.score)),
+                //         ref tag => tag.clone(),
+                //     },
+                //     solution: solution,
+                // }, s.score)
             },
         }
     }
@@ -340,10 +338,12 @@ impl Solver {
     pub fn solve_n(&self, args: &[(State, Input, DavarOptions)]) -> Vec<(Solution, Score)> {
         let nargs = args.len() as f64;
         let mut solutions = Vec::new();
+        let buffer_time = 0.1; // this is maybe the time needed to do
+                               // the printing and all.
         for i in 0 .. args.len() {
             let fraction_of_time = (i as f64 + 1.0)/nargs;
             let mut opts = args[i].2.clone();
-            opts.time_limit = fraction_of_time*opts.time_limit;
+            opts.time_limit = fraction_of_time*(opts.time_limit - buffer_time);
             // println!("{}/{} seconds left",
             //          opts.time_limit + opts.starting_time - time::precise_time_s(),
             //          opts.time_limit);
@@ -369,52 +369,52 @@ impl Solver {
     }
 }
 
-fn look_ahead_dfs(state: &State, route_so_far: &String, remaining_depth: u8, pops: &[String], time_allowed: Duration)
-                      -> (String, State)
-{
+// fn look_ahead_dfs(state: &State, route_so_far: &String, remaining_depth: u8, pops: &[String], time_allowed: Duration)
+//                       -> (String, State)
+// {
 
-    let time_allowed = Duration::seconds(10);
-    let possible_positions = enumerate_resting_positions(&state);
-    let mut routes_and_states = possible_positions.iter()
-        .filter_map(|u| find_path_dfs(&state, &u, pops, time_allowed));
+//     let time_allowed = Duration::seconds(10);
+//     let possible_positions = enumerate_resting_positions(&state);
+//     let mut routes_and_states = possible_positions.iter()
+//         .filter_map(|u| find_path_dfs(&state, &u, pops, time_allowed));
 
-    if remaining_depth == 0 || state.game_over {
-        if let Some((mut route, mut final_state)) = routes_and_states.next() {
-            for (r, s) in routes_and_states {
-                if s.score > state.score {
-                    route = r;
-                    final_state = s;
-                }
-            }
-            final_state = final_state.apply_sequence(&string_to_commands(route_so_far));
-            final_state.visualize();
-            return (format!("{}{}", route_so_far, route), final_state);
-        } else {
-            // no valid states found? This shouldn't happen.
-            return ("".into(), state.clone());
-        }
-    } else {
-        unreachable!();
-        let mut better_routes_and_states = routes_and_states.map(|(r, s)| {
-            let route_to_use = format!("{}{}", route_so_far, r);
-            // fixme: calculate
-            let time_for_inner = Duration::seconds(0);
-            look_ahead_dfs(&s, &route_to_use, remaining_depth - 1, pops, time_for_inner)
-        });
-        if let Some((mut route, mut final_state)) = better_routes_and_states.next() {
-            for (r, s) in better_routes_and_states {
-                if s.score > state.score {
-                    route = r;
-                    final_state = s;
-                }
-            }
-            return (format!("{}{}", route_so_far, route), final_state);
-        } else {
-            // no valid states found? This shouldn't happen.
-            return ("".into(), state.clone());
-        }
-    }
-}
+//     if remaining_depth == 0 || state.game_over {
+//         if let Some((mut route, mut final_state)) = routes_and_states.next() {
+//             for (r, s) in routes_and_states {
+//                 if s.score > state.score {
+//                     route = r;
+//                     final_state = s;
+//                 }
+//             }
+//             final_state = final_state.apply_sequence(&string_to_commands(route_so_far));
+//             final_state.visualize();
+//             return (format!("{}{}", route_so_far, route), final_state);
+//         } else {
+//             // no valid states found? This shouldn't happen.
+//             return ("".into(), state.clone());
+//         }
+//     } else {
+//         unreachable!();
+//         let mut better_routes_and_states = routes_and_states.map(|(r, s)| {
+//             let route_to_use = format!("{}{}", route_so_far, r);
+//             // fixme: calculate
+//             let time_for_inner = Duration::seconds(0);
+//             look_ahead_dfs(&s, &route_to_use, remaining_depth - 1, pops, time_for_inner)
+//         });
+//         if let Some((mut route, mut final_state)) = better_routes_and_states.next() {
+//             for (r, s) in better_routes_and_states {
+//                 if s.score > state.score {
+//                     route = r;
+//                     final_state = s;
+//                 }
+//             }
+//             return (format!("{}{}", route_so_far, route), final_state);
+//         } else {
+//             // no valid states found? This shouldn't happen.
+//             return ("".into(), state.clone());
+//         }
+//     }
+// }
 
 use std::num::Wrapping;
 pub struct Random(Wrapping<u32>);
@@ -673,7 +673,7 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
 }
 
 pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String],
-                     time_allowed: Duration) -> Option<(String, State)> {
+                     opt: &DavarOptions) -> Option<(String, State)> {
 
     let mut state = s.clone();
     let mut out_cmd_stack: Vec<String> = Vec::new();
@@ -684,8 +684,6 @@ pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String],
     let mut cur_move_idx: usize = 0;
 
     //println!("Finding Nemo!");
-
-    let start = PreciseTime::now();
 
     let mut units_moved_down_to = Vec::new();
     loop {
@@ -731,9 +729,8 @@ pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String],
             }
         }
         //println!("Exited first LOOPOPOPPPPPO*******************. len: {}", dfs_stack.len());
-        let now = PreciseTime::now();
         // We've tried all paths and nothing works or we're out of time
-        if dfs_stack.len() == 0 || start.to(now) > time_allowed {
+        if dfs_stack.len() == 0 || opt.time_left() < 0.0 {
             //panic!();
             return None;
         }
