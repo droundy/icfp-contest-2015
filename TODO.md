@@ -1,3 +1,23 @@
+- finish / debug look_ahead
+
+- sorting pop by length (long first)
+
+- work out timing / killing
+
+- sort by center of mass
+
+- check path without pop, then with
+
+- PYTHON: Parse submit JSON to find/submit best ones
+
+
+
+
+
+
+
+
+
 - Implement game AI
 
     * Tetris-solution
