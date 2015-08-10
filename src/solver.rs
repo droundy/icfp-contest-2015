@@ -15,12 +15,14 @@ pub enum Solver {
     MonteCarlo,
     Supplied,
     BottomUp,
+    BottomUpDfs,
     LookAhead,
 }
 
 pub fn name_to_solver(name: &str) -> Solver {
     let solvers: Vec<Solver> = vec![Solver::AllDown, Solver::SolverSE,
-                                    Solver::MonteCarlo, Solver::Supplied, Solver::BottomUp];
+                                    Solver::MonteCarlo, Solver::Supplied, Solver::BottomUp,
+                                    Solver::BottomUpDfs, Solver::LookAhead];
     for s in solvers.into_iter() {
         if s.name() == name {
             return s;
@@ -221,13 +223,60 @@ impl Solver {
                     solution: solution,
                 }, s.score)
             },
-            Solver::LookAhead => {
+            Solver::BottomUpDfs => {
                 let mut solution = String::new();
-                let depth = 1;
+                let mut s = state.clone();
+                let mut moves: Vec<String> = vec!["p".into(),
+                                                  "b".into(),
+                                                  "d".into(),
+                                                  "k".into(),
+                                                  "a".into(),
+                                                  "l".into()];
+                for i in 0 .. opt.phrases_of_power.len() {
+                    moves.push(opt.phrases_of_power[i].clone());
+                }
+                let moves = moves;
+                let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
+
+                while !s.game_over {
+                    let possible_next_positions = enumerate_resting_positions(&s);
+                    for i in 0 .. possible_next_positions.len() {
+                        // println!("could go to {},{}",
+                        //          possible_next_positions[i].pivot.x,
+                        //          possible_next_positions[i].pivot.y);
+                    }
+                    for u in possible_next_positions {
+                        match find_path_dfs(&s, &u, &opt.phrases_of_power[..]) {
+                            None => (),
+                            Some((more_cmds, _score)) => {
+                                // println!("cmds: {}", more_cmds);
+                                s = s.apply_sequence(&string_to_commands(&more_cmds));
+                                solution = solution + &more_cmds;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                (Solution {
+                    problemId: input.id,
+                    seed: s.seed,
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
+                    solution: solution,
+                }, s.score)
+            },
+            Solver::LookAhead => {
+                println!("I EXIST");
+                let mut solution = String::new();
+                let depth = 0;
                 let mut s = state.clone();
 
                 while !s.game_over {
-                    let (solution, s) = look_ahead(&s, &solution, depth, &opt.phrases_of_power[..]);
+                    let (solution, s) = look_ahead_dfs(&s, &solution, depth, &opt.phrases_of_power[..]);
                 }
 
                 (Solution {
@@ -268,18 +317,24 @@ impl Solver {
             Solver::MonteCarlo => "mc".into(),
             Solver::Supplied => "supplied".into(),
             Solver::BottomUp => "bottomup".into(),
+            Solver::BottomUpDfs => "bottomupdfs".into(),
             Solver::LookAhead => "lookahead".into(),
         }
     }
 }
 
-fn look_ahead(state: &State, route_so_far: &String, remaining_depth: u8, pops: &[String])
+fn look_ahead_dfs(state: &State, route_so_far: &String, remaining_depth: u8, pops: &[String])
                       -> (String, State)
 {
+    println!("lookyloo");
     let possible_positions = enumerate_resting_positions(&state);
-    let mut routes_and_states = possible_positions.iter().filter_map(|u| find_paths_dfs(&state, u.clone(), pops));
+    println!("enumerated positions!");
+    let mut routes_and_states = possible_positions.iter()
+        .filter_map(|u| find_path_dfs(&state, &u, pops));
+    println!("found paths!");
 
     if remaining_depth == 0 || state.game_over {
+        println!("depth is 0 or game is over!");
         if let Some((mut route, mut final_state)) = routes_and_states.next() {
             for (r, s) in routes_and_states {
                 if s.score > state.score {
@@ -295,7 +350,7 @@ fn look_ahead(state: &State, route_so_far: &String, remaining_depth: u8, pops: &
     } else {
         let mut better_routes_and_states = routes_and_states.map(|(r, s)| {
             let route_to_use = format!("{}{}", route_so_far, r);
-            look_ahead(&s, &route_to_use, remaining_depth - 1, pops)
+            look_ahead_dfs(&s, &route_to_use, remaining_depth - 1, pops)
         });
         if let Some((mut route, mut final_state)) = better_routes_and_states.next() {
             for (r, s) in better_routes_and_states {
@@ -466,7 +521,46 @@ impl Random {
         println!("NO PATH to target at {}, {}!",
                  target.pivot.x, target.pivot.y);
         None
-    }
+                      }
+    // fn look_ahead_mc(&self, state: &State, route_so_far: &String, remaining_depth: u8,
+    //                  options: &[String], cmds: &[Vec<Command>]) -> (String, State) {
+
+    //     let possible_positions = enumerate_resting_positions(&state);
+    //     let mut routes_and_states = possible_positions.iter()
+    //         .filter_map(|u| self.find_path(&state, u, options, cmds));
+
+    //     if remaining_depth == 0 || state.game_over {
+    //         if let Some((mut route, mut final_state)) = routes_and_states.next() {
+    //             for (r, s) in routes_and_states {
+    //                 if s.score > state.score {
+    //                     route = r;
+    //                     final_state = s;
+    //                 }
+    //             }
+    //             return (format!("{}{}", route_so_far, route), final_state);
+    //         } else {
+    //             // no valid states found? This shouldn't happen.
+    //             return (("".into(), state.clone()));
+    //         }
+    //     } else {
+    //         let mut better_routes_and_states = routes_and_states.map(|(r, s)| {
+    //             let route_to_use = format!("{}{}", route_so_far, r);
+    //             self.look_ahead_mc(&s, &route_to_use, remaining_depth-1, options, cmds)
+    //         });
+    //         if let Some((mut route, mut final_state)) = better_routes_and_states.next() {
+    //             for (r, s) in better_routes_and_states {
+    //                 if s.score > state.score {
+    //                     route = r;
+    //                     final_state = s;
+    //                 }
+    //             }
+    //             return (format!("{}{}", route_so_far, route), final_state);
+    //         } else {
+    //             // no valid states found? This shouldn't happen.
+    //             return (("".into(), state.clone()));
+    //         }
+    //     }
+    // }
 }
 
 fn get_score(s: &State, goal: &Unit, move_string: &String) -> i32 {         // Return how much closer the move gets you
@@ -493,7 +587,9 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
     let mut recommended_moves: Vec<String> = Vec::new();        // Order moves powerwords first by distance-minimizing
 
     let mut pop_cpy: Vec<String> = pop.clone().into();  // Order phrases by distance-minimizing
-    pop_cpy.sort_by( |a, b| get_score(s, goal, a).cmp(&get_score(s, goal, b)) );
+    pop_cpy.sort_by( |a, b| get_score(s, goal, b).cmp(&get_score(s, goal, a)) );
+
+    // pop_cpy.filter(|&phrase| get_score(s, goal, &phrase) >= 0)
     for phrase in pop_cpy {
         if get_score(s, goal, &phrase) >= 0 {           // If it gets you closer, add it to moves
             recommended_moves.push(phrase.clone());
@@ -501,7 +597,7 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
     }
 
     let mut moves_cpy: Vec<String> = moves.clone().into();  // Then order moves by distance-minimizing
-    moves_cpy.sort_by( |a, b| get_score(s, goal, a).cmp(&get_score(s, goal, b)) );
+    moves_cpy.sort_by( |a, b| get_score(s, goal, b).cmp(&get_score(s, goal, a)) );
     for mov_str in moves_cpy {
         if get_score(s, goal, &mov_str) >= 0 {
             recommended_moves.push(mov_str.clone());
@@ -515,47 +611,55 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
     }
 }
 
-pub fn find_paths_dfs(s: &State, goal_unit: Unit, pop: &[String]) -> Option<(String, State)> {
-    let mut out_cmd_str: String = "".into();
+pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String]) -> Option<(String, State)> {
     let mut state = s.clone();
     let mut out_cmd_stack: Vec<String> = Vec::new();
 
     let mut moves: Vec<String> = vec!["p".into(), "b".into(), "a".into(), "l".into(), "d".into(), "k".into()];
 
-    let mut dfs_stack: Vec<(State, i32)> = Vec::new();
-    let mut cur_move_idx: i32 = 0;
+    let mut dfs_stack: Vec<(State, usize)> = Vec::new();
+    let mut cur_move_idx: usize = 0;
     let mut next_moves: Vec<String> = Vec::new();
 
-    while state.unit_sequence[0].pivot.x != goal_unit.pivot.x && state.unit_sequence[0].pivot.y != goal_unit.pivot.y  {
+    //println!("Finding Nemo!");
+
+    loop {
+        //println!("entered first loop. len: {}", dfs_stack.len());
         while let Some(next_moves) = get_move_ranking_dfs(&state, &goal_unit, pop, &moves[..]) {
+            //println!("entered second loop");
+
+            if cur_move_idx >= next_moves.len() {
+                break;
+            }
 
             dfs_stack.push( (state.clone(), cur_move_idx) );
-            out_cmd_stack.push(next_moves[cur_move_idx as usize].clone());
+            out_cmd_stack.push(next_moves[cur_move_idx].clone());
 
-            for cmd in string_to_commands(&next_moves[cur_move_idx as usize][..]) {
+            for cmd in string_to_commands(&next_moves[cur_move_idx][..]) {
                 state = state.apply(cmd);
-                println!("{}", state.visualize());
+                //println!("{}", state.visualize());
             }
 
             cur_move_idx = 0;
+
+            // win!
+            // fixme: This will succeed even if we don't have correct rotation. CHECK ROTATION.
+            if state.unit_sequence[0].pivot.x != goal_unit.pivot.x && state.unit_sequence[0].pivot.y != goal_unit.pivot.y {
+                println!("{}", out_cmd_stack.connect(""));
+                return Some((out_cmd_stack.connect(""), state));
+            }
         }
-        println!("Backtracking.");
+        //println!("Exited first LOOPOPOPPPPPO*******************. len: {}", dfs_stack.len());
         if dfs_stack.len() == 0 {   // We've tried all paths and nothing works
-            return None
+            //panic!();
+            return None;
         }
-        let tup = dfs_stack.pop().unwrap();
-        state = tup.0;
-        cur_move_idx = tup.1;
-        cur_move_idx += 1_i32;
+        //println!("Backtracking.");
+        let (old_state, old_move_idx) = dfs_stack.pop().unwrap();
+        state = old_state;
+        cur_move_idx = old_move_idx + 1;
         out_cmd_stack.pop();
     }
-
-    for s in out_cmd_stack {
-        println!("out command: {}", s);
-        out_cmd_str = out_cmd_str + &s;
-    }
-
-    Some((out_cmd_str, state))
 }
 
 // pub fn find_path(s: &State, goal: &Unit) -> Option(&[Commands]) {
@@ -614,7 +718,7 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
     let mut valid_positions: Vec<Unit> = Vec::new();
 
     for y in (-min..state.height + min).rev() {
-        for x in (-min..state.width + min - 1) {
+        for x in (-min..state.width + min) {
             let final_pivot = Cell::new(x, y);
             let delta = Lattice::from(final_pivot) - Lattice::from(unit.pivot);
             let final_members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
