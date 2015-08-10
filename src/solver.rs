@@ -238,19 +238,15 @@ impl Solver {
                 let mut pop_sorted = opt.phrases_of_power.clone();
                 pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
                 moves.extend(pop_sorted);
-                // for i in 0 .. opt.phrases_of_power.len() {
-                //     moves.push(opt.phrases_of_power[i].clone());
-                // }
-                let moves = moves;
-                let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
+                // let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
 
                 while !s.game_over {
                     let possible_next_positions = enumerate_resting_positions(&s);
-                    for i in 0 .. possible_next_positions.len() {
-                        // println!("could go to {},{}",
-                        //          possible_next_positions[i].pivot.x,
-                        //          possible_next_positions[i].pivot.y);
-                    }
+                    // for i in 0 .. possible_next_positions.len() {
+                    //     println!("could go to {},{}",
+                    //              possible_next_positions[i].pivot.x,
+                    //              possible_next_positions[i].pivot.y);
+                    // }
                     if possible_next_positions.len() == 0 {
                         break;
                     }
@@ -293,7 +289,9 @@ impl Solver {
                 pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
 
                 while !s.game_over {
-                    let (solution, s) = look_ahead_dfs(&s, &solution, depth, &pop_sorted);
+                    let (new_sol, new_state) = look_ahead_dfs(&s, &solution, depth, &pop_sorted);
+                    solution = new_sol;
+                    s = new_state;
                 }
 
                 (Solution {
@@ -803,12 +801,19 @@ fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
                 }
         }
         if u.members.iter().any(|&c| {
-            // fixme: make sure this isn't an off by one error
             c.y == state.height - 1 || has_lower_neighbor(state, c)
         }) {
             real_positions.push(u);
         }
     }
+
+    // let's sort them by center of mass!
+    #[inline]
+    fn center_of_mass(unit: &Unit) -> f32 {
+        let y = unit.members.iter().fold(0, |curr_y, &cell| curr_y + cell.y);
+        y as f32 / unit.members.len() as f32
+    }
+    real_positions.sort_by(|a, b| center_of_mass(b).partial_cmp(&center_of_mass(a)).unwrap_or(::std::cmp::Ordering::Equal));
     real_positions
 }
 
