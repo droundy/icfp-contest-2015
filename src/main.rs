@@ -53,7 +53,9 @@ fn main() {
     for jh in joinhandles {
         match jh.join() {
             Err(e) => {
-                println!("Error! {:?}", e);
+                if options.verbose {
+                    println!("Error! {:?}", e);
+                }
             }
             Ok(more_solutions) => {
                 for (s, sc) in more_solutions {
@@ -65,8 +67,10 @@ fn main() {
         }
     }
     if options.submit {
-        //println!("I am submitting solutions for {}.", i);
         in_out::submit_solutions(&solutions);
+    }
+    if !options.verbose {
+        in_out::print_solutions(&solutions);
     }
     if options.save_solutions {
         in_out::save_solutions(&solutions_and_scores);
@@ -75,13 +79,14 @@ fn main() {
     if let Some(a) = options.animate {
         for s in solutions {
             s.animate(a);
-            // println!("  cmd: {}", s.solution);
         }
     }
 
-    println!("total score: {}", totalscore);
+    if options.verbose {
+        println!("total score: {}", totalscore);
+    }
 
-    if !options.submit {
+    if !options.submit && options.verbose {
         println!("Not submitting solutions.");
     }
 }

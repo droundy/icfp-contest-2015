@@ -273,9 +273,11 @@ impl Solver {
                                         s = s.apply_sequence(&string_to_commands(&more_cmds));
                                         solution = solution + &more_cmds;
 
-                                        println!("Got {} to get to {},{}", more_cmds,
-                                                 u.pivot.x, u.pivot.y);
-                                        println!("{}", s.visualize());
+                                        if opt.verbose {
+                                            println!("Got {} to get to {},{}", more_cmds,
+                                                     u.pivot.x, u.pivot.y);
+                                            println!("{}", s.visualize());
+                                        }
                                         break;
                                     }
                                     None => (),
@@ -304,7 +306,9 @@ impl Solver {
                 }, s.score)
             },
             Solver::LookAhead => {
-                println!("I EXIST");
+                if opt.verbose {
+                    println!("I EXIST");
+                }
                 let mut solution = String::new();
                 let depth = 0;
                 let mut s = state.clone();
@@ -343,7 +347,9 @@ impl Solver {
             //          opts.time_limit + opts.starting_time - time::precise_time_s(),
             //          opts.time_limit);
             let (sol, sc) = self.solve(&args[i].0, &args[i].1, &opts);
-            println!("finished {}[{}, {}] = {}", self.name(), sol.problemId, sol.seed, sc);
+            if opts.verbose {
+                println!("finished {}[{}, {}] = {}", self.name(), sol.problemId, sol.seed, sc);
+            }
             solutions.push((sol, sc));
         }
         solutions
@@ -716,9 +722,9 @@ pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String],
             // win!
             // fixme: This will succeed even if we don't have correct rotation. CHECK ROTATION.
             if state.unit_sequence[0] == *goal_unit {
-                println!("Got {},{} using {} ({} left)", goal_unit.pivot.x,
-                         goal_unit.pivot.y, out_cmd_stack.connect(""),
-                         state.unit_sequence.len());
+                // println!("Got {},{} using {} ({} left)", goal_unit.pivot.x,
+                //          goal_unit.pivot.y, out_cmd_stack.connect(""),
+                //          state.unit_sequence.len());
                 return Some((out_cmd_stack.connect(""), state));
             }
         }

@@ -107,6 +107,10 @@ pub fn submit_solutions(s: &Vec<Solution>) {
         .spawn().unwrap().wait().unwrap();
 }
 
+pub fn print_solutions(s: &Vec<Solution>) {
+    println!("{}", json::encode(s).unwrap())
+}
+
 pub fn save_solutions(s: &Vec<(Solution, Score)>) {
     use std::fs::File;
     use std::io::Write;

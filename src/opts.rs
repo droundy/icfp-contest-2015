@@ -20,6 +20,7 @@ pub struct DavarOptions {
     pub seed: Option<i32>,
     pub solution: Option<String>,
     pub tag: Option<String>,
+    pub verbose: bool,
 }
 
 
@@ -36,6 +37,7 @@ pub fn opts() -> DavarOptions {
     let mut opts = getopts::Options::new();
     opts.optflag("", "submit", "submit to server");
     opts.optflag("", "save", "save solutions as files");
+    opts.optflag("", "verbose", "send verbosity to stdout");
     opts.optopt("", "solver", "name of solver algorithm", "ALGORITHM");
     opts.optopt("c", "", "number of cores", "NCORE");
     opts.optflag("h", "help", "print this help menu");
@@ -60,6 +62,7 @@ pub fn opts() -> DavarOptions {
         ncores: 1,
         submit: matches.opt_present("submit"),
         save_solutions: matches.opt_present("save"),
+        verbose: matches.opt_present("verbose"),
         files: matches.opt_strs("f"),
         time_limit: 60.0*60.0*24.0, // one day time limit!
         memory_limit: None,
