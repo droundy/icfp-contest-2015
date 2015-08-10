@@ -39,3 +39,4 @@ metadata.json
 parsed/
 submission_results.txt
 play_icfp2015
+output.json
