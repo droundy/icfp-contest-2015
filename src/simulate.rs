@@ -195,10 +195,10 @@ impl State {
     }
 }
 
-pub fn score_commands(cmds: Vec<Command>, s0: &State) -> State {
+pub fn score_commands(cmds: &[Command], s0: &State) -> State {
     let mut s = s0.clone();
     for c in cmds {
-        s = s.apply(c);
+        s = s.apply(*c);
     }
     s
 }
@@ -386,6 +386,7 @@ mod tests {
         assert_eq!(0, s.score);
 
     }
+    
 
     #[test]
     fn apply_works() {
