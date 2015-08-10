@@ -7,4 +7,4 @@ play_icfp2015 : target/release/solve-davar
 	cp target/release/solve-davar play_icfp2015
 
 dist:
-	git archive -o xiphon.tar.gz HEAD
+	git archive --prefix xiphon/ -o xiphon.tar.gz HEAD
