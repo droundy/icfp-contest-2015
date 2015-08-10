@@ -235,9 +235,12 @@ impl Solver {
                                                   "k".into(),
                                                   "a".into(),
                                                   "l".into()];
-                for i in 0 .. opt.phrases_of_power.len() {
-                    moves.push(opt.phrases_of_power[i].clone());
-                }
+                let mut pop_sorted = opt.phrases_of_power.clone();
+                pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
+                moves.extend(pop_sorted);
+                // for i in 0 .. opt.phrases_of_power.len() {
+                //     moves.push(opt.phrases_of_power[i].clone());
+                // }
                 let moves = moves;
                 let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
 
@@ -286,8 +289,11 @@ impl Solver {
                 let depth = 0;
                 let mut s = state.clone();
 
+                let mut pop_sorted = opt.phrases_of_power.clone();
+                pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
+
                 while !s.game_over {
-                    let (solution, s) = look_ahead_dfs(&s, &solution, depth, &opt.phrases_of_power[..]);
+                    let (solution, s) = look_ahead_dfs(&s, &solution, depth, &pop_sorted);
                 }
 
                 (Solution {
