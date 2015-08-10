@@ -15,6 +15,7 @@ pub enum Solver {
     MonteCarlo,
     Supplied,
     BottomUp,
+    LookAhead,
 }
 
 pub fn name_to_solver(name: &str) -> Solver {
@@ -223,6 +224,26 @@ impl Solver {
                     solution: solution,
                 }, s.score)
             },
+            Solver::LookAhead => {
+                let mut solution = String::new();
+                let depth = 1;
+                let mut s = state.clone();
+
+                while !s.game_over {
+                    let (solution, s) = look_ahead(&s, &solution, depth, &opt.phrases_of_power[..]);
+                }
+
+                (Solution {
+                    problemId: input.id,
+                    seed: s.seed,
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
+                    solution: solution,
+                }, s.score)
+            },
         }
     }
 
@@ -250,6 +271,46 @@ impl Solver {
             Solver::MonteCarlo => "mc".into(),
             Solver::Supplied => "supplied".into(),
             Solver::BottomUp => "bottomup".into(),
+            Solver::LookAhead => "lookahead".into(),
+        }
+    }
+}
+
+fn look_ahead(state: &State, route_so_far: &String, remaining_depth: u8, pops: &[String])
+                      -> (String, State)
+{
+    let possible_positions = enumerate_resting_positions(&state);
+    let mut routes_and_states = possible_positions.iter().filter_map(|u| find_paths_dfs(&state, u.clone(), pops));
+
+    if remaining_depth == 0 || state.game_over {
+        if let Some((mut route, mut final_state)) = routes_and_states.next() {
+            for (r, s) in routes_and_states {
+                if s.score > state.score {
+                    route = r;
+                    final_state = s;
+                }
+            }
+            return (format!("{}{}", route_so_far, route), final_state);
+        } else {
+            // no valid states found? This shouldn't happen.
+            return (("".into(), state.clone()));
+        }
+    } else {
+        let mut better_routes_and_states = routes_and_states.map(|(r, s)| {
+            let route_to_use = format!("{}{}", route_so_far, r);
+            look_ahead(&s, &route_to_use, remaining_depth - 1, pops)
+        });
+        if let Some((mut route, mut final_state)) = better_routes_and_states.next() {
+            for (r, s) in better_routes_and_states {
+                if s.score > state.score {
+                    route = r;
+                    final_state = s;
+                }
+            }
+            return (format!("{}{}", route_so_far, route), final_state);
+        } else {
+            // no valid states found? This shouldn't happen.
+            return (("".into(), state.clone()));
         }
     }
 }
@@ -460,7 +521,7 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
             recommended_moves.push(mov_str.clone());
         }
     }
-    println!("recommended moves: {:?}", recommended_moves);
+    //println!("recommended moves: {:?}", recommended_moves);
     if recommended_moves.len() > 0 {
         Some(recommended_moves)
     } else {
@@ -470,18 +531,42 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
 
 pub fn find_paths_dfs(s: &State, goal_unit: Unit, pop: &[String]) -> Option<(String, State)> {
     let mut out_cmd_str: String = "".into();
-
     let mut state = s.clone();
+    let mut out_cmd_stack: Vec<String> = Vec::new();
 
     let mut moves: Vec<String> = vec!["p".into(), "b".into(), "a".into(), "l".into(), "d".into(), "k".into()];
 
-    let mut dfs_stack: Vec<(State, Vec<String>)> = Vec::new();
+    let mut dfs_stack: Vec<(State, i32)> = Vec::new();
+    let mut cur_move_idx: i32 = 0;
+    let mut next_moves: Vec<String> = Vec::new();
 
-    while let Some(next_moves) = get_move_ranking_dfs(&state, &goal_unit, pop, &moves[..]) {
-        for cmd in string_to_commands(&next_moves[0][..]) {
-            state = state.apply(cmd);
+    while state.unit_sequence[0].pivot.x != goal_unit.pivot.x && state.unit_sequence[0].pivot.y != goal_unit.pivot.y  {
+        while let Some(next_moves) = get_move_ranking_dfs(&state, &goal_unit, pop, &moves[..]) {
+
+            dfs_stack.push( (state.clone(), cur_move_idx) );
+            out_cmd_stack.push(next_moves[cur_move_idx as usize].clone());
+
+            for cmd in string_to_commands(&next_moves[cur_move_idx as usize][..]) {
+                state = state.apply(cmd);
+                println!("{}", state.visualize());
+            }
+
+            cur_move_idx = 0;
         }
-        dfs_stack.push( (state.clone(), next_moves) );
+        println!("Backtracking.");
+        if dfs_stack.len() == 0 {   // We've tried all paths and nothing works
+            return None
+        }
+        let tup = dfs_stack.pop().unwrap();
+        state = tup.0;
+        cur_move_idx = tup.1;
+        cur_move_idx += 1_i32;
+        out_cmd_stack.pop();
+    }
+
+    for s in out_cmd_stack {
+        println!("out command: {}", s);
+        out_cmd_str = out_cmd_str + &s;
     }
 
     Some((out_cmd_str, state))
