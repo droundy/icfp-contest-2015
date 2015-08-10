@@ -15,6 +15,7 @@ pub enum Solver {
     MonteCarlo,
     Supplied,
     BottomUp,
+    LookAhead,
 }
 
 pub fn name_to_solver(name: &str) -> Solver {
@@ -220,6 +221,26 @@ impl Solver {
                     solution: solution,
                 }, s.score)
             },
+            Solver::LookAhead => {
+                let mut solution = String::new();
+                let depth = 1;
+                let mut s = state.clone();
+
+                while !s.game_over {
+                    let (solution, s) = look_ahead(&s, &solution, depth, &opt.phrases_of_power[..]);
+                }
+
+                (Solution {
+                    problemId: input.id,
+                    seed: s.seed,
+                    tag: match opt.tag {
+                        None => Some(format!("{}[{},{}] = {}", self.name(),
+                                             input.id, s.seed, s.score)),
+                        ref tag => tag.clone(),
+                    },
+                    solution: solution,
+                }, s.score)
+            },
         }
     }
 
@@ -247,6 +268,46 @@ impl Solver {
             Solver::MonteCarlo => "mc".into(),
             Solver::Supplied => "supplied".into(),
             Solver::BottomUp => "bottomup".into(),
+            Solver::LookAhead => "lookahead".into(),
+        }
+    }
+}
+
+fn look_ahead(state: &State, route_so_far: &String, remaining_depth: u8, pops: &[String])
+                      -> (String, State)
+{
+    let possible_positions = enumerate_resting_positions(&state);
+    let mut routes_and_states = possible_positions.iter().filter_map(|u| find_paths_dfs(&state, u.clone(), pops));
+
+    if remaining_depth == 0 || state.game_over {
+        if let Some((mut route, mut final_state)) = routes_and_states.next() {
+            for (r, s) in routes_and_states {
+                if s.score > state.score {
+                    route = r;
+                    final_state = s;
+                }
+            }
+            return (format!("{}{}", route_so_far, route), final_state);
+        } else {
+            // no valid states found? This shouldn't happen.
+            return (("".into(), state.clone()));
+        }
+    } else {
+        let mut better_routes_and_states = routes_and_states.map(|(r, s)| {
+            let route_to_use = format!("{}{}", route_so_far, r);
+            look_ahead(&s, &route_to_use, remaining_depth - 1, pops)
+        });
+        if let Some((mut route, mut final_state)) = better_routes_and_states.next() {
+            for (r, s) in better_routes_and_states {
+                if s.score > state.score {
+                    route = r;
+                    final_state = s;
+                }
+            }
+            return (format!("{}{}", route_so_far, route), final_state);
+        } else {
+            // no valid states found? This shouldn't happen.
+            return (("".into(), state.clone()));
         }
     }
 }
