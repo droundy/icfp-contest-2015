@@ -5,8 +5,7 @@ use super::Direction::*;
 use super::Command::*;
 use super::simulate::Lattice;
 use super::opts::*;
-
-extern crate time;
+use super::time::{PreciseTime, Duration};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Solver {
@@ -227,6 +226,10 @@ impl Solver {
                 }, s.score)
             },
             Solver::BottomUpDfs => {
+                let extra_time = Duration::seconds(10);
+                let start = PreciseTime::now();
+                let time_limit = Duration::seconds(opt.time_limit as i64);
+
                 let mut solution = String::new();
                 let mut s = state.clone();
                 let mut moves: Vec<String> = vec!["p".into(),
@@ -240,7 +243,9 @@ impl Solver {
                 moves.extend(pop_sorted);
                 // let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
 
-                while !s.game_over {
+                let mut now = PreciseTime::now();
+
+                'game: while !s.game_over {
                     let possible_next_positions = enumerate_resting_positions(&s);
                     // for i in 0 .. possible_next_positions.len() {
                     //     println!("could go to {},{}",
@@ -250,21 +255,35 @@ impl Solver {
                     if possible_next_positions.len() == 0 {
                         break;
                     }
+                    let time_left = time_limit - start.to(now);
+                    let pieces_left = s.unit_sequence.len() as i32;
+                    // Super hokey heuristic. Estimating that the number of
+                    // possible_next_positions that we have to try for failed attempts
+                    // somehow cancels out with the times that finding paths goes really
+                    // quickly.
+                    let time_to_find: Duration = time_left / pieces_left;
                     for u in possible_next_positions {
-                        match find_path_dfs(&s, &u, &[]) {
+                        match find_path_dfs(&s, &u, &[], time_to_find) {
                             None => (),
                             Some(_) => {
-                                let (mut more_cmds, _) = find_path_dfs(&s, &u, &opt.phrases_of_power).unwrap();
-                                more_cmds = more_cmds + "l";
-                                s = s.apply_sequence(&string_to_commands(&more_cmds));
-                                solution = solution + &more_cmds;
+                                // we want extra time for when we're using pops
+                                match find_path_dfs(&s, &u, &opt.phrases_of_power, time_to_find*2) {
+                                    Some((mut more_cmds, _)) => {
+                                        more_cmds = more_cmds + "l";
+                                        s = s.apply_sequence(&string_to_commands(&more_cmds));
+                                        solution = solution + &more_cmds;
 
-                                println!("Got {} to get to {},{}", more_cmds,
-                                         u.pivot.x, u.pivot.y);
-                                println!("{}", s.visualize());
-                                break;
+                                        println!("Got {} to get to {},{}", more_cmds,
+                                                 u.pivot.x, u.pivot.y);
+                                        println!("{}", s.visualize());
+                                        break;
+                                    }
+                                    None => (),
+                                }
                             }
                         }
+                        now = PreciseTime::now();
+                        if time_limit - start.to(now) < extra_time { break 'game; }
                     }
                 }
 
@@ -346,11 +365,13 @@ impl Solver {
 fn look_ahead_dfs(state: &State, route_so_far: &String, remaining_depth: u8, pops: &[String])
                       -> (String, State)
 {
+
+    let time_allowed = Duration::seconds(10);
     println!("lookyloo");
     let possible_positions = enumerate_resting_positions(&state);
     println!("enumerated positions!");
     let mut routes_and_states = possible_positions.iter()
-        .filter_map(|u| find_path_dfs(&state, &u, pops));
+        .filter_map(|u| find_path_dfs(&state, &u, pops, time_allowed));
     println!("found paths!");
 
     if remaining_depth == 0 || state.game_over {
@@ -643,7 +664,9 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
     }
 }
 
-pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String]) -> Option<(String, State)> {
+pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String],
+                     time_allowed: Duration) -> Option<(String, State)> {
+
     let mut state = s.clone();
     let mut out_cmd_stack: Vec<String> = Vec::new();
 
@@ -653,6 +676,8 @@ pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String]) -> Option<(Str
     let mut cur_move_idx: usize = 0;
 
     //println!("Finding Nemo!");
+
+    let start = PreciseTime::now();
 
     let mut units_moved_down_to = Vec::new();
     loop {
@@ -698,7 +723,9 @@ pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String]) -> Option<(Str
             }
         }
         //println!("Exited first LOOPOPOPPPPPO*******************. len: {}", dfs_stack.len());
-        if dfs_stack.len() == 0 {   // We've tried all paths and nothing works
+        let now = PreciseTime::now();
+        // We've tried all paths and nothing works or we're out of time
+        if dfs_stack.len() == 0 || start.to(now) > time_allowed {
             //panic!();
             return None;
         }
