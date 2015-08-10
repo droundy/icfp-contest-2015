@@ -1,5 +1,6 @@
 extern crate num;
 extern crate rustc_serialize;
+extern crate time;
 
 use std::vec::Vec;
 use std::collections::HashSet;

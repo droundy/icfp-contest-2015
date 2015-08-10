@@ -4,7 +4,13 @@
 
 - PYTHON: Parse submit JSON to find/submit best ones
 
-- pop scorer
+- Match program with given specs
+
+
+
+
+
+- pop scorer (done, but only adds score at end so it can't be used for anything)
 
 
 
