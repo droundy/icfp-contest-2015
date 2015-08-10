@@ -2,8 +2,8 @@ Team Ξίφων and the Physicists
 
 Note that Ξίφων is transliterated Xiphon and pronounced Ziffun.
 
-Our program is written in rust, primarily by four physicists, but with
-some help from two dogs.
+Our program is written in rust 1.2, primarily by four physicists, but
+with some help from two dogs.
 
 Our executable supports a number of non-standard command-line flags
 for different behavior, which you can examine using the --help flag.

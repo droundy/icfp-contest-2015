@@ -235,6 +235,8 @@ impl Solver {
 
                 let mut find_path_opt = opt.clone();
 
+                let time_per_piece = opt.time_left() / (s.unit_sequence.len()+2) as f64;
+
                 'bu_dfs_main_loop: while !s.game_over {
                     let possible_next_positions = enumerate_resting_positions(&s);
                     // for i in 0 .. possible_next_positions.len() {
@@ -245,20 +247,18 @@ impl Solver {
                     if possible_next_positions.len() == 0 {
                         break;
                     }
-                    let time_left = opt.time_left();
-                    let pieces_left = s.unit_sequence.len() as f64;
-                    // Super hokey heuristic. Estimating that the number of
-                    // possible_next_positions that we have to try for failed attempts
-                    // somehow cancels out with the times that finding paths goes really
-                    // quickly.
-                    let time_for_path = time_left / pieces_left;
                     for u in possible_next_positions {
-                        find_path_opt.time_limit = opt.time_limit - time_left + time_for_path;
+                        if opt.time_left() < 0. {
+                            // aaack, we are late!!!
+                            break;
+                        }
+                        let pieces_left = s.unit_sequence.len() as f64;
+                        find_path_opt.time_limit = opt.time_limit - (pieces_left+0.3)*time_per_piece;
                         match find_path_dfs(&s, &u, &[], &find_path_opt) {
                             None => (),
                             Some(_) => {
                                 // we want extra time for when we're using pops
-                                find_path_opt.time_limit += 2.0*time_for_path;
+                                find_path_opt.time_limit = opt.time_limit - pieces_left*time_per_piece;
                                 match find_path_dfs(&s, &u, &opt.phrases_of_power, &find_path_opt) {
                                     Some((mut more_cmds, _)) => {
                                         more_cmds = more_cmds + "l";
@@ -338,7 +338,7 @@ impl Solver {
     pub fn solve_n(&self, args: &[(State, Input, DavarOptions)]) -> Vec<(Solution, Score)> {
         let nargs = args.len() as f64;
         let mut solutions = Vec::new();
-        let buffer_time = 0.1; // this is maybe the time needed to do
+        let buffer_time = 0.5; // this is maybe the time needed to do
                                // the printing and all.
         for i in 0 .. args.len() {
             let fraction_of_time = (i as f64 + 1.0)/nargs;
