@@ -103,7 +103,7 @@ impl Solver {
                 for iters in 1..1000000000 {
                     let split_point = if best_cmds.len() > 0 { r.random() % best_cmds.len() } else { 0 };
                     let start: String = best_cmds[0..split_point].into();
-                    let mid_state = simulate::score_commands(string_to_commands(&start),
+                    let mid_state = simulate::score_commands(&string_to_commands(&start),
                                                              &state);
                     let (mut cmds, mut new_s) = r.many_commands(&mid_state, &moves, &seqs, 10000);
                     if new_s.score > 0 {

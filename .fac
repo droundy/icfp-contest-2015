@@ -22,6 +22,7 @@ c Makefile
 C target/debug
 C target/release
 C ~/.cargo
+C play_icfp2015
 > target/release/solve-davar
 > target/debug/solve-davar
 
