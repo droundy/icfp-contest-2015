@@ -226,7 +226,7 @@ impl Solver {
                 }, s.score)
             },
             Solver::BottomUpDfs => {
-                let extra_time = Duration::seconds(10);
+                let extra_time = Duration::seconds(1);
                 let start = PreciseTime::now();
                 let time_limit = Duration::seconds(opt.time_limit as i64);
 
