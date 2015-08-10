@@ -31,3 +31,6 @@ The algorithm we use is based on three main functions:
    implement a version that plans ahead.
 
 
+Note: Our git repository is available on github at:
+
+https://github.com/droundy/icfp-contest-2015
