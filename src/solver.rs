@@ -195,10 +195,13 @@ impl Solver {
 
                 while !s.game_over {
                     let possible_next_positions = enumerate_resting_positions(&s);
-                    for i in 0 .. possible_next_positions.len() {
-                        println!("could go to {},{}",
-                                 possible_next_positions[i].pivot.x,
-                                 possible_next_positions[i].pivot.y);
+                    // for i in 0 .. possible_next_positions.len() {
+                    //     println!("could go to {},{}",
+                    //              possible_next_positions[i].pivot.x,
+                    //              possible_next_positions[i].pivot.y);
+                    // }
+                    if possible_next_positions.len() == 0 {
+                        break;
                     }
                     for u in possible_next_positions {
                         match r.find_path(&s, &u, &moves, &seqs) {
@@ -455,7 +458,7 @@ impl Random {
 
     fn find_path(&mut self, input_s: &State, target: &Unit, options: &[String], cmds: &[Vec<Command>])
                  -> Option<(String, State)> {
-        for _ in 0 .. 20*input_s.width {
+        for _ in 0 .. 40 {
             match self.find_path_once(input_s, target, options, cmds) {
                 None => (),
                 x => {
@@ -473,6 +476,7 @@ impl Random {
         let mut attempts = 0;
         let num_units = s.unit_sequence.len();
 
+        let debug_path = false;
         let mut level = s.unit_sequence[0].pivot.y + 1;
         // println!("starting at level {} with target level {}",
         //          level, target.pivot.y);
@@ -487,39 +491,49 @@ impl Random {
                     attempts = 0;
                 }
             }
-            if attempts > 10*s.width {
-                println!("NO PATH to level {} for {},{}!",
-                         level, target.pivot.x, target.pivot.y);
+            if attempts > 4*s.width {
+                if debug_path {
+                    println!("NO PATH to level {} for {},{}!",
+                             level, target.pivot.x, target.pivot.y);
+                }
                 return None;
             }
         }
         if s.unit_sequence[0].pivot.y == target.pivot.y {
-            for _ in 0..30*s.width {
+            for _ in 0..4*s.width {
+                if s.unit_sequence[0] == *target {
+                    println!("Found a path to target at {}, {} from {},{}! ({} left)",
+                             target.pivot.x, target.pivot.y,
+                             s.unit_sequence[0].pivot.x,
+                             s.unit_sequence[0].pivot.y,
+                             s.unit_sequence.len());
+                    for _ in 0..6 {
+                        let (more, snew) = self.commands(&s, &options[4..6], &cmds[4..6]);
+                        if snew.unit_sequence.len() != num_units {
+                            // println!("Found the finisher");
+                            println!("{}", snew.visualize());
+                            return Some((all_cmds + &more, snew));
+                        }
+                    }
+                }
                 let (more, snew) = self.commands(&s, &options[0..4], &cmds[0..4]);
                 if snew.unit_sequence.len() != num_units {
                     continue;
                 }
                 all_cmds = all_cmds + &more;
                 s = snew;
-                if s.unit_sequence[0] == *target {
-                    println!("Found a path to target at {}, {}!",
-                             target.pivot.x, target.pivot.y);
-                    for _ in 0..6 {
-                        let (more, snew) = self.commands(&s, &options[4..6], &cmds[4..6]);
-                        if snew.unit_sequence.len() != num_units {
-                            println!("Found the finisher");
-                            return Some((all_cmds + &more, snew));
-                        }
-                    }
-                }
             }
         } else {
-            println!("NO PATH to target: got wrong level {} for {}, {}!",
-                     s.unit_sequence[0].pivot.y,
+            if debug_path {
+                println!("NO PATH to target: got wrong level {} for {}, {}!",
+                         s.unit_sequence[0].pivot.y,
+                         target.pivot.x, target.pivot.y);
+                }
+        }
+        if debug_path {
+            println!("NO PATH to target at {}, {}!",
                      target.pivot.x, target.pivot.y);
         }
-        println!("NO PATH to target at {}, {}!",
-                 target.pivot.x, target.pivot.y);
         None
                       }
     // fn look_ahead_mc(&self, state: &State, route_so_far: &String, remaining_depth: u8,
@@ -710,24 +724,37 @@ fn test_distance() {
 }
 
 fn enumerate_resting_positions(state: &State) -> Vec<Unit> {
-
+    if state.unit_sequence.len() == 0 {
+        return Vec::new();
+    }
     let unit = &state.unit_sequence[0];
 
     let min = unit.members.iter().map(|&m| distance(unit.pivot, m)).min().unwrap();
 
     let mut valid_positions: Vec<Unit> = Vec::new();
 
+    let mut orientations: Vec<Unit> = Vec::new();
+    {
+        let mut u = unit.clone();
+        for _ in 0..6 {
+            if !orientations.contains(&u) {
+                orientations.push(u.clone());
+            } else {
+                break;
+            }
+            u.rotate(Clock::Wise);
+        }
+    }
     for y in (-min..state.height + min).rev() {
         for x in (-min..state.width + min) {
             let final_pivot = Cell::new(x, y);
             let delta = Lattice::from(final_pivot) - Lattice::from(unit.pivot);
-            let final_members = unit.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
-            let mut unit = Unit{pivot: final_pivot, members: final_members.collect()};
-            for _ in (0..6) {
+            for u in orientations.iter() {
+                let final_members = u.members.iter().map(|&m| Cell::from(Lattice::from(m) + delta));
+                let unit = Unit{pivot: final_pivot, members: final_members.collect()};
                 if !state.is_unit_invalid(&unit) {
-                    valid_positions.push(unit.clone());
+                    valid_positions.push(unit);
                 }
-                unit.rotate(Clock::Wise);
             }
         }
     }
