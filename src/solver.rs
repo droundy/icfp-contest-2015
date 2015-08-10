@@ -28,7 +28,7 @@ pub fn name_to_solver(name: &str) -> Solver {
             return s;
         }
     }
-    Solver::MonteCarlo
+    Solver::BottomUpDfs
 }
 
 impl Solver {
@@ -248,13 +248,21 @@ impl Solver {
                         //          possible_next_positions[i].pivot.x,
                         //          possible_next_positions[i].pivot.y);
                     }
+                    if possible_next_positions.len() == 0 {
+                        break;
+                    }
                     for u in possible_next_positions {
                         match find_path_dfs(&s, &u, &opt.phrases_of_power[..]) {
                             None => (),
-                            Some((more_cmds, _score)) => {
+                            Some((mut more_cmds, _score)) => {
                                 // println!("cmds: {}", more_cmds);
+                                more_cmds = more_cmds + "l";
                                 s = s.apply_sequence(&string_to_commands(&more_cmds));
                                 solution = solution + &more_cmds;
+
+                                println!("Got {} to get to {},{}", more_cmds,
+                                         u.pivot.x, u.pivot.y);
+                                println!("{}", s.visualize());
                                 break;
                             }
                         }
@@ -348,7 +356,7 @@ fn look_ahead_dfs(state: &State, route_so_far: &String, remaining_depth: u8, pop
             return (format!("{}{}", route_so_far, route), final_state);
         } else {
             // no valid states found? This shouldn't happen.
-            return (("".into(), state.clone()));
+            return ("".into(), state.clone());
         }
     } else {
         let mut better_routes_and_states = routes_and_states.map(|(r, s)| {
@@ -365,7 +373,7 @@ fn look_ahead_dfs(state: &State, route_so_far: &String, remaining_depth: u8, pop
             return (format!("{}{}", route_so_far, route), final_state);
         } else {
             // no valid states found? This shouldn't happen.
-            return (("".into(), state.clone()));
+            return ("".into(), state.clone());
         }
     }
 }
@@ -583,11 +591,12 @@ fn get_score(s: &State, goal: &Unit, move_string: &String) -> i32 {         // R
     let mut s0 = s.clone();
     let start_dist = distance(s0.unit_sequence[0].pivot, goal.pivot);
     //println!("Before move looks like: \n{}", s0.visualize());
+    let num_units = s.unit_sequence.len();
 
     for cmd in string_to_commands(&move_string[..]) {
         s0 = s0.apply(cmd);
         //println!("After a move: \n{}", s0.visualize());
-        if s0.game_over {
+        if s0.game_over || s0.unit_sequence.len() != num_units {
             //println!("Blah. That move caused an invalid state.");
             return i32::MIN         // Game-ending move. Return lowest weight possible.
         }
@@ -605,7 +614,7 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
 
     // pop_cpy.filter(|&phrase| get_score(s, goal, &phrase) >= 0)
     for phrase in pop_cpy {
-        if get_score(s, goal, &phrase) >= 0 {           // If it gets you closer, add it to moves
+        if get_score(s, goal, &phrase) >= -1 {           // If it gets you closer, add it to moves
             recommended_moves.push(phrase.clone());
         }
     }
@@ -613,7 +622,7 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
     let mut moves_cpy: Vec<String> = moves.clone().into();  // Then order moves by distance-minimizing
     moves_cpy.sort_by( |a, b| get_score(s, goal, b).cmp(&get_score(s, goal, a)) );
     for mov_str in moves_cpy {
-        if get_score(s, goal, &mov_str) >= 0 {
+        if get_score(s, goal, &mov_str) >= -1 {
             recommended_moves.push(mov_str.clone());
         }
     }
@@ -629,14 +638,14 @@ pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String]) -> Option<(Str
     let mut state = s.clone();
     let mut out_cmd_stack: Vec<String> = Vec::new();
 
-    let mut moves: Vec<String> = vec!["p".into(), "b".into(), "a".into(), "l".into(), "d".into(), "k".into()];
+    let moves: Vec<String> = vec!["p".into(), "b".into(), "a".into(), "l".into(), "d".into(), "k".into()];
 
     let mut dfs_stack: Vec<(State, usize)> = Vec::new();
     let mut cur_move_idx: usize = 0;
-    let mut next_moves: Vec<String> = Vec::new();
 
     //println!("Finding Nemo!");
 
+    let mut units_moved_down_to = Vec::new();
     loop {
         //println!("entered first loop. len: {}", dfs_stack.len());
         while let Some(next_moves) = get_move_ranking_dfs(&state, &goal_unit, pop, &moves[..]) {
@@ -649,17 +658,33 @@ pub fn find_path_dfs(s: &State, goal_unit: &Unit, pop: &[String]) -> Option<(Str
             dfs_stack.push( (state.clone(), cur_move_idx) );
             out_cmd_stack.push(next_moves[cur_move_idx].clone());
 
-            for cmd in string_to_commands(&next_moves[cur_move_idx][..]) {
-                state = state.apply(cmd);
-                //println!("{}", state.visualize());
+            let commands = string_to_commands(&next_moves[cur_move_idx]);
+            state = state.apply_sequence(&commands);
+            match commands[commands.len()-1] {
+                Move(SW) | Move(SE) | Rotate(_) => {
+                    if units_moved_down_to.contains(&state.unit_sequence[0]) {
+                        // println!("We saved some time at {},{} ({} explored) {}",
+                        //          state.unit_sequence[0].pivot.x,
+                        //          state.unit_sequence[0].pivot.y,
+                        //          units_moved_down_to.len(),
+                        //          out_cmd_stack.connect(""));
+                        break;
+                    }
+                    // println!("We found a new thing at level {}",
+                    //          state.unit_sequence[0].pivot.y);
+                    units_moved_down_to.push(state.unit_sequence[0].clone());
+                },
+                _ => (),
             }
 
             cur_move_idx = 0;
 
             // win!
             // fixme: This will succeed even if we don't have correct rotation. CHECK ROTATION.
-            if state.unit_sequence[0].pivot.x != goal_unit.pivot.x && state.unit_sequence[0].pivot.y != goal_unit.pivot.y {
-                println!("{}", out_cmd_stack.connect(""));
+            if state.unit_sequence[0] == *goal_unit {
+                println!("Got {},{} using {} ({} left)", goal_unit.pivot.x,
+                         goal_unit.pivot.y, out_cmd_stack.connect(""),
+                         state.unit_sequence.len());
                 return Some((out_cmd_stack.connect(""), state));
             }
         }
