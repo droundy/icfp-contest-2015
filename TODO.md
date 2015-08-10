@@ -2,13 +2,10 @@
 
 - work out timing / killing
 
-- check path without pop, then with
-
 - PYTHON: Parse submit JSON to find/submit best ones
 
 - pop scorer
 
-- diagnose scoring issues -- getting 0 for some things
 
 
 
@@ -50,3 +47,5 @@
 - sorting pop by length (long first)
 
 - sort by center of mass
+
+- check path without pop, then with

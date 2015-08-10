@@ -251,10 +251,10 @@ impl Solver {
                         break;
                     }
                     for u in possible_next_positions {
-                        match find_path_dfs(&s, &u, &opt.phrases_of_power[..]) {
+                        match find_path_dfs(&s, &u, &[]) {
                             None => (),
-                            Some((mut more_cmds, _score)) => {
-                                // println!("cmds: {}", more_cmds);
+                            Some(_) => {
+                                let (mut more_cmds, _) = find_path_dfs(&s, &u, &opt.phrases_of_power).unwrap();
                                 more_cmds = more_cmds + "l";
                                 s = s.apply_sequence(&string_to_commands(&more_cmds));
                                 solution = solution + &more_cmds;
@@ -267,6 +267,11 @@ impl Solver {
                         }
                     }
                 }
+
+                // fixme: Ideally we should be tracking this as we go so we can use it.
+                let pop_score = simulate::score_pop(&solution, &opt.phrases_of_power);
+                s.score += pop_score;
+
 
                 (Solution {
                     problemId: input.id,
