@@ -45,7 +45,7 @@ fn main() {
         temp_seed
     } else {
         println!("Only one seed for this problem. Using it!");
-        0
+        seeds[0]
     };
 
     let mut state: State = states.iter().find(|s| s.seed == seed).unwrap().clone();
