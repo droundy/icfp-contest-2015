@@ -1,0 +1,29 @@
+Team Ξίφων and the Physicists
+
+Note that Ξίφων is transliterated Xiphon and pronounced Ziffun.
+
+Our program is written in rust, primarily by four physicists, but with
+some help from two dogs.
+
+Our executable supports a number of non-standard command-line flags
+for different behavior, which you can examine using the --help flag.
+
+The most fun flag is --animate TIME_PER_FRAME_IN_MILLISECONDS, which
+shows a nice animation of the solution.
+
+The algorithm we use is based on three main functions:
+
+1. a path-finding algorithm `find_path_dhs` (which sometimes tries to
+   use phrases of power, but without accounting for their score
+   benefits),
+
+2. a function `enumerate_resting_dependencies`, which lists all the
+   places we might want a given block to land (but not all the places
+   it *could* land), assuming a bottom-up filling strategy.
+
+3. a function `Solver::solve` that uses the two above to pick the best
+   sequence of landing places, and the most beneficial paths to those
+   places.  As you can see, `solve` supports several different
+   algorithms, which can be selected using a command-line flag.
+
+

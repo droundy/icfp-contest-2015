@@ -24,3 +24,7 @@ C target/release
 C ~/.cargo
 > target/release/solve-davar
 > target/debug/solve-davar
+
+| cp target/release/solve-davar play_icfp2015
+< target/release/solve-davar
+> play_icfp2015
