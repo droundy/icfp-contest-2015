@@ -228,20 +228,14 @@ impl Solver {
 
                 let mut solution = String::new();
                 let mut s = state.clone();
-                let mut moves: Vec<String> = vec!["p".into(),
-                                                  "b".into(),
-                                                  "d".into(),
-                                                  "k".into(),
-                                                  "a".into(),
-                                                  "l".into()];
+
                 let mut pop_sorted = opt.phrases_of_power.clone();
                 pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
-                moves.extend(pop_sorted);
                 // let seqs: Vec<Vec<Command>> = moves.iter().map(|s| { string_to_commands(s) }).collect();
 
                 let mut find_path_opt = opt.clone();
 
-                'game: while !s.game_over {
+                'bu_dfs_main_loop: while !s.game_over {
                     let possible_next_positions = enumerate_resting_positions(&s);
                     // for i in 0 .. possible_next_positions.len() {
                     //     println!("could go to {},{}",
@@ -282,7 +276,7 @@ impl Solver {
                                 }
                             }
                         }
-                        if opt.time_left() < extra_time { break 'game; }
+                        if opt.time_left() < extra_time { break 'bu_dfs_main_loop; }
                     }
                 }
 
@@ -304,34 +298,40 @@ impl Solver {
             },
             Solver::LookAhead => {
                 unimplemented!()
+                // let depth: u8 = 0;
+
+                // let extra_time = Duration::seconds(1);
+                // let start = PreciseTime::now();
+                // let time_limit = Duration::seconds(opt.time_limit as i64);
+
+                // let mut solution = String::new();
+                // let mut s = state.clone();
+
+                // let mut pop_sorted = opt.phrases_of_power.clone();
+                // pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
+
+                // let mut now;
+
+                // 'lu_main_loop: while !s.game_over {
+                //     let nlooks = s.unit_sequence.len() as i32 / (depth + 1) as i32;
+                //     now = PreciseTime::now();
+                //     let time_to_look = (time_limit - start.to(now) - extra_time) / nlooks;
+                //     let (new_sol, new_state) = look_ahead_dfs(&s, &solution, depth, &pop_sorted, time_to_look);
+                //     solution = new_sol;
+                //     s = new_state;
+                // }
+
+                // (Solution {
+                //     problemId: input.id,
+                //     seed: s.seed,
+                //     tag: match opt.tag {
+                //         None => Some(format!("{}[{},{}] = {}", self.name(),
+                //                              input.id, s.seed, s.score)),
+                //         ref tag => tag.clone(),
+                //     },
+                //     solution: solution,
+                // }, s.score)
             },
-            //     if opt.verbose {
-            //         println!("I EXIST");
-            //     }
-            //     let mut solution = String::new();
-            //     let depth = 0;
-            //     let mut s = state.clone();
-
-            //     let mut pop_sorted = opt.phrases_of_power.clone();
-            //     pop_sorted.sort_by(|a, b| b.len().cmp(&a.len()));
-
-            //     while !s.game_over {
-            //         let (new_sol, new_state) = look_ahead_dfs(&s, &solution, depth, &pop_sorted);
-            //         solution = new_sol;
-            //         s = new_state;
-            //     }
-
-            //     (Solution {
-            //         problemId: input.id,
-            //         seed: s.seed,
-            //         tag: match opt.tag {
-            //             None => Some(format!("{}[{},{}] = {}", self.name(),
-            //                                  input.id, s.seed, s.score)),
-            //             ref tag => tag.clone(),
-            //         },
-            //         solution: solution,
-            //     }, s.score)
-            // },
         }
     }
 
@@ -369,20 +369,16 @@ impl Solver {
     }
 }
 
-// fn look_ahead_dfs(state: &State, route_so_far: &String, remaining_depth: u8, pops: &[String])
+// fn look_ahead_dfs(state: &State, route_so_far: &String, remaining_depth: u8, pops: &[String], time_allowed: Duration)
 //                       -> (String, State)
 // {
 
 //     let time_allowed = Duration::seconds(10);
-//     println!("lookyloo");
 //     let possible_positions = enumerate_resting_positions(&state);
-//     println!("enumerated positions!");
 //     let mut routes_and_states = possible_positions.iter()
 //         .filter_map(|u| find_path_dfs(&state, &u, pops, time_allowed));
-//     println!("found paths!");
 
 //     if remaining_depth == 0 || state.game_over {
-//         println!("depth is 0 or game is over!");
 //         if let Some((mut route, mut final_state)) = routes_and_states.next() {
 //             for (r, s) in routes_and_states {
 //                 if s.score > state.score {
@@ -390,15 +386,20 @@ impl Solver {
 //                     final_state = s;
 //                 }
 //             }
+//             final_state = final_state.apply_sequence(&string_to_commands(route_so_far));
+//             final_state.visualize();
 //             return (format!("{}{}", route_so_far, route), final_state);
 //         } else {
 //             // no valid states found? This shouldn't happen.
 //             return ("".into(), state.clone());
 //         }
 //     } else {
+//         unreachable!();
 //         let mut better_routes_and_states = routes_and_states.map(|(r, s)| {
 //             let route_to_use = format!("{}{}", route_so_far, r);
-//             look_ahead_dfs(&s, &route_to_use, remaining_depth - 1, pops)
+//             // fixme: calculate
+//             let time_for_inner = Duration::seconds(0);
+//             look_ahead_dfs(&s, &route_to_use, remaining_depth - 1, pops, time_for_inner)
 //         });
 //         if let Some((mut route, mut final_state)) = better_routes_and_states.next() {
 //             for (r, s) in better_routes_and_states {
