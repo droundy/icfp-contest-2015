@@ -1,23 +1,16 @@
 - finish / debug look_ahead
 
-- work out timing / killing
-
 - PYTHON: Parse submit JSON to find/submit best ones
 
 - Match program with given specs
 
 
 
-
+# Done???????????
 
 - pop scorer (done, but only adds score at end so it can't be used for anything)
 
-
-
-
-
-
-
+- work out timing / killing (bottomupdfs is hokily timed)
 
 
 - Implement game AI
