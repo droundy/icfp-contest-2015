@@ -24,6 +24,13 @@ The algorithm we use is based on three main functions:
 3. a function `Solver::solve` that uses the two above to pick the best
    sequence of landing places, and the most beneficial paths to those
    places.  As you can see, `solve` supports several different
-   algorithms, which can be selected using a command-line flag.
+   algorithms, which can be selected using a command-line flag.  Our
+   default (and best) is `BottomUpDfs`, which just tries to place each
+   block as close to the bottom, in terms of center of mass, as it
+   can.  Obviously, this is suboptimal, but we didn't have time to
+   implement a version that plans ahead.
 
 
+Note: Our git repository is available on github at:
+
+https://github.com/droundy/icfp-contest-2015
