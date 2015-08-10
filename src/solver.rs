@@ -446,7 +446,7 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
             recommended_moves.push(mov_str.clone());
         }
     }
-    println!("recommended moves: {:?}", recommended_moves);
+    //println!("recommended moves: {:?}", recommended_moves);
     if recommended_moves.len() > 0 {
         Some(recommended_moves)
     } else {
@@ -456,18 +456,42 @@ fn get_move_ranking_dfs(s: &State, goal: &Unit, pop: &[String], moves: &[String]
 
 pub fn find_paths_dfs(s: &State, goal_unit: Unit, pop: &[String]) -> Option<(String, State)> {
     let mut out_cmd_str: String = "".into();
-
     let mut state = s.clone();
+    let mut out_cmd_stack: Vec<String> = Vec::new();
 
     let mut moves: Vec<String> = vec!["p".into(), "b".into(), "a".into(), "l".into(), "d".into(), "k".into()];
 
-    let mut dfs_stack: Vec<(State, Vec<String>)> = Vec::new();
+    let mut dfs_stack: Vec<(State, i32)> = Vec::new();
+    let mut cur_move_idx: i32 = 0;
+    let mut next_moves: Vec<String> = Vec::new();
 
-    while let Some(next_moves) = get_move_ranking_dfs(&state, &goal_unit, pop, &moves[..]) {
-        for cmd in string_to_commands(&next_moves[0][..]) {
-            state = state.apply(cmd);
+    while state.unit_sequence[0].pivot.x != goal_unit.pivot.x && state.unit_sequence[0].pivot.y != goal_unit.pivot.y  {
+        while let Some(next_moves) = get_move_ranking_dfs(&state, &goal_unit, pop, &moves[..]) {
+
+            dfs_stack.push( (state.clone(), cur_move_idx) );
+            out_cmd_stack.push(next_moves[cur_move_idx as usize].clone());
+
+            for cmd in string_to_commands(&next_moves[cur_move_idx as usize][..]) {
+                state = state.apply(cmd);
+                println!("{}", state.visualize());
+            }
+
+            cur_move_idx = 0;
         }
-        dfs_stack.push( (state.clone(), next_moves) );
+        println!("Backtracking.");
+        if dfs_stack.len() == 0 {   // We've tried all paths and nothing works
+            return None
+        }
+        let tup = dfs_stack.pop().unwrap();
+        state = tup.0;
+        cur_move_idx = tup.1;
+        cur_move_idx += 1_i32;
+        out_cmd_stack.pop();
+    }
+
+    for s in out_cmd_stack {
+        println!("out command: {}", s);
+        out_cmd_str = out_cmd_str + &s;
     }
 
     Some((out_cmd_str, state))
